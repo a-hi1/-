@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="1100" viewBox="0 0 1100 1100">
+  <!-- 外圆环 -->
+  <circle cx="550" cy="550" r="548" fill="none" stroke="rgba(230,168,40,0.4)" stroke-width="2"/>
+  <!-- 内圆环 -->
+  <circle cx="550" cy="550" r="375" fill="none" stroke="rgba(230,168,40,0.4)" stroke-width="2"/>
+</svg>

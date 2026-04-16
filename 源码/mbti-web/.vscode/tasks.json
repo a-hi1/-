@@ -1,0 +1,17 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "mvn package (skipTests)",
+			"type": "shell",
+			"command": "mvn",
+			"args": [
+				"-DskipTests",
+				"package"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		}
+	]
+}
