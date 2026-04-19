@@ -3,6 +3,7 @@ package com.mbti.web;
 import com.mbti.web.dao.PersonnelDao;
 import com.mbti.web.dao.TeamDao;
 import com.mbti.web.dao.UserDao;
+import com.mbti.web.model.Team;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -61,6 +62,13 @@ public class RegisterServlet extends HttpServlet {
         return;
       }
 
+      if (passwd.length() < 4) {
+        req.setAttribute("error", "密码长度至少 4 位");
+        req.setAttribute("teams", teamDao.listAll());
+        req.getRequestDispatcher("/WEB-INF/jsp/register.jsp").forward(req, resp);
+        return;
+      }
+
       if (teamIdStr.isEmpty()) {
         req.setAttribute("error", "请选择批次");
         req.setAttribute("teams", teamDao.listAll());
@@ -75,8 +83,31 @@ public class RegisterServlet extends HttpServlet {
         return;
       }
 
-      Integer teamId = teamIdStr.isEmpty() ? null : Integer.parseInt(teamIdStr);
-      LocalDate birthdate = birthdateStr.isEmpty() ? null : LocalDate.parse(birthdateStr);
+      Integer teamId;
+      try {
+        teamId = Integer.parseInt(teamIdStr);
+      } catch (NumberFormatException ex) {
+        req.setAttribute("error", "请选择有效批次");
+        req.setAttribute("teams", teamDao.listAll());
+        req.getRequestDispatcher("/WEB-INF/jsp/register.jsp").forward(req, resp);
+        return;
+      }
+      Team team = teamDao.findById(teamId);
+      if (team == null || (team.getStatus() != null && team.getStatus() != 1)) {
+        req.setAttribute("error", "批次不存在或已停用");
+        req.setAttribute("teams", teamDao.listAll());
+        req.getRequestDispatcher("/WEB-INF/jsp/register.jsp").forward(req, resp);
+        return;
+      }
+      LocalDate birthdate;
+      try {
+        birthdate = birthdateStr.isEmpty() ? null : LocalDate.parse(birthdateStr);
+      } catch (Exception ex) {
+        req.setAttribute("error", "出生日期格式错误，请使用 yyyy-MM-dd");
+        req.setAttribute("teams", teamDao.listAll());
+        req.getRequestDispatcher("/WEB-INF/jsp/register.jsp").forward(req, resp);
+        return;
+      }
 
       int userId = userDao.create(login, name, passwd, 4, 1);
       String finalPhone = phone.isEmpty() ? login : phone;

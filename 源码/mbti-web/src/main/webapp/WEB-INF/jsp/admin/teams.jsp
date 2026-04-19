@@ -3,6 +3,10 @@
 <c:set var="pageTitle" value="批次管理" />
 <%@ include file="../_layout_top.jspf" %>
 
+<div class="card" style="margin-bottom:12px;display:flex;justify-content:flex-start;align-items:center;gap:10px;">
+  <a class="btn btn-primary" href="${pageContext.request.contextPath}/admin/teams/create">添加批次</a>
+</div>
+
 <div class="card" style="margin-bottom:14px">
   <form method="post" action="${pageContext.request.contextPath}/admin/teams" class="grid" style="align-items:end">
     <input type="hidden" name="action" value="save" />
@@ -40,31 +44,33 @@
 <div class="card">
   <table class="table">
     <tr>
-      <th style="width:70px">ID</th>
+      <th style="width:70px; text-align:center;">ID</th>
       <th>批次名称</th>
-      <th style="width:160px">开始时间</th>
-      <th style="width:90px">状态</th>
-      <th style="width:220px">操作</th>
+      <th style="width:160px; text-align:center;">开始时间</th>
+      <th style="width:90px; text-align:center;">状态</th>
+      <th style="min-width:160px; text-align:right; padding-right:24px; white-space:nowrap;">操作</th>
     </tr>
     <c:forEach items="${teams}" var="t">
       <tr>
-        <td>${t.id}</td>
-        <td><c:out value="${t.name}"/></td>
-        <td><c:out value="${t.beginYear}"/></td>
-        <td>
+        <td style="text-align:center; color:#666;">${t.id}</td>
+        <td style="font-weight:500;"><c:out value="${t.name}"/></td>
+        <td style="text-align:center; color:#777;"><c:out value="${t.beginYear}"/></td>
+        <td style="text-align:center;">
           <c:choose>
             <c:when test="${t.status == 1}"><span class="tag tag-green">启用</span></c:when>
             <c:when test="${t.status == 2}"><span class="tag tag-gray">停用</span></c:when>
             <c:otherwise><span class="muted">未设置</span></c:otherwise>
           </c:choose>
         </td>
-        <td>
-          <a class="btn btn-light" href="${pageContext.request.contextPath}/admin/teams?id=${t.id}">编辑</a>
-          <form method="post" action="${pageContext.request.contextPath}/admin/teams" style="display:inline-block;margin-left:8px">
-            <input type="hidden" name="action" value="delete" />
-            <input type="hidden" name="id" value="${t.id}" />
-            <button type="submit" class="btn btn-warn" onclick="return confirm('确认删除该批次？')">删除</button>
-          </form>
+        <td style="text-align:right; padding-right:24px; white-space:nowrap;">
+          <div style="display:flex; justify-content:flex-end; align-items:center; gap:8px;">
+            <a class="btn btn-light btn-sm" href="${pageContext.request.contextPath}/admin/teams/view?id=${t.id}" style="padding:5px 12px; margin:0;">查看</a>
+            <a class="btn btn-light btn-sm" href="${pageContext.request.contextPath}/admin/teams/personnel?teamId=${t.id}" style="padding:5px 12px; margin:0;">查看参测人员</a>
+            <a class="btn btn-view btn-sm" href="${pageContext.request.contextPath}/admin/teams/edit?id=${t.id}" style="padding:5px 12px; margin:0;">编辑</a>
+            <a class="btn btn-light btn-sm" href="${pageContext.request.contextPath}/admin/personnel?teamId=${t.id}" style="padding:5px 12px; margin:0;">添加参测人员</a>
+            <a class="btn btn-light btn-sm" href="${pageContext.request.contextPath}/admin/teams/personnel/import?teamId=${t.id}" style="padding:5px 12px; margin:0;">导入参测人员</a>
+            <a class="btn btn-danger btn-sm" href="${pageContext.request.contextPath}/admin/teams/delete?id=${t.id}" style="padding:5px 12px; margin:0; white-space:nowrap;">删除</a>
+          </div>
         </td>
       </tr>
     </c:forEach>

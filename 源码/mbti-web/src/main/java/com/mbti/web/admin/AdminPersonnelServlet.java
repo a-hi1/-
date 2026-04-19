@@ -35,11 +35,23 @@ public class AdminPersonnelServlet extends HttpServlet {
       req.setAttribute("teams", teamDao.listAll());
 
       String teamIdStr = val(req.getParameter("teamId"));
-      String keyword = val(req.getParameter("q"));
+      String nameKeyword = val(req.getParameter("name"));
+      String phoneKeyword = val(req.getParameter("phone"));
+      // 兼容旧参数 q：若未传 name/phone，则用 q 作为姓名关键字。
+      String legacyQ = val(req.getParameter("q"));
+      if (nameKeyword.isEmpty() && phoneKeyword.isEmpty() && !legacyQ.isEmpty()) {
+        nameKeyword = legacyQ;
+      }
       Integer teamId = teamIdStr.isEmpty() ? null : Integer.parseInt(teamIdStr);
       req.setAttribute("teamId", teamId);
-      req.setAttribute("q", keyword);
-      req.setAttribute("personnel", personnelDao.listFiltered(teamId, keyword));
+      req.setAttribute("name", nameKeyword);
+      req.setAttribute("phone", phoneKeyword);
+
+      if (teamId != null && nameKeyword.isEmpty() && phoneKeyword.isEmpty()) {
+        req.setAttribute("personnel", personnelDao.findByTeamId(teamId));
+      } else {
+        req.setAttribute("personnel", personnelDao.listFiltered(teamId, nameKeyword, phoneKeyword));
+      }
 
       String idStr = req.getParameter("id");
       if (idStr != null && !idStr.trim().isEmpty()) {

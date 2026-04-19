@@ -1,15 +1,40 @@
+param(
+  [int]$Port = 8080,
+  [switch]$KillExisting
+)
+
 $ErrorActionPreference = 'Stop'
 
-$projectDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$pomPath = Join-Path $projectDir 'pom.xml'
+$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$pomPath = Join-Path $scriptDir 'pom.xml'
 
 if (-not (Test-Path $pomPath)) {
-  Write-Error "未找到 pom.xml：$pomPath"
+  throw "pom.xml not found: $pomPath"
 }
 
-Set-Location $projectDir
-Write-Host "在目录启动: $projectDir"
-Write-Host "访问地址: http://127.0.0.1:8080/mbti-web/"
+if (-not (Get-Command mvn -ErrorAction SilentlyContinue)) {
+  throw "mvn command not found in PATH"
+}
 
-# 用完整插件坐标避免 jetty 前缀解析失败
-mvn -f $pomPath org.eclipse.jetty:jetty-maven-plugin:9.4.54.v20240208:run
+$portToken = ':' + [string]$Port
+$listenLine = netstat -ano | Select-String $portToken | Select-String 'LISTENING' | Select-Object -First 1
+
+if ($listenLine) {
+  $fields = ($listenLine.ToString() -split '\s+') | Where-Object { $_ -ne '' }
+  $existingPid = [int]$fields[-1]
+
+  if ($KillExisting) {
+    Write-Host ("Port {0} is occupied by PID {1}. Stopping it..." -f $Port, $existingPid)
+    Stop-Process -Id $existingPid -Force -ErrorAction Stop
+  } else {
+    Write-Host ("Port {0} is already occupied by PID {1}." -f $Port, $existingPid)
+    Write-Host "Run with -KillExisting to stop it first."
+    exit 1
+  }
+}
+
+Set-Location $scriptDir
+Write-Host ("Project dir: {0}" -f $scriptDir)
+Write-Host ("Open URL: http://127.0.0.1:{0}/mbti-web/" -f $Port)
+
+mvn -f $pomPath ("-Djetty.port={0}" -f $Port) org.eclipse.jetty:jetty-maven-plugin:9.4.54.v20240208:run

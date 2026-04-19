@@ -1,149 +1,149 @@
-<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+﻿<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<c:set var="pageTitle" value="参测人员注册" />
 <c:set var="ctx" value="${pageContext.request.contextPath}" />
 <!doctype html>
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title><c:out value="${pageTitle}" default="MBTI职业性格测试系统"/></title>
-  <link rel="stylesheet" href="${pageContext.request.contextPath}/static/app.css" />
+  <title>参测人员注册 - MBTI职业性格测试系统</title>
   <style>
-    body{margin:0;background:#fff;font-family:"Microsoft YaHei","PingFang SC","Helvetica Neue",Arial,sans-serif}
-    .reg-scene{min-height:100vh;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;padding:24px}
-    .reg-bg{position:absolute;left:0;top:0;width:50%;height:100%;background:#f6dca1;z-index:0}
-
-    .reg-ring{
-      position:absolute;z-index:1;pointer-events:none;
-      width:1120px;height:1120px;right:-210px;top:50%;transform:translateY(-50%);
-    }
-    .reg-ring img{width:100%;height:100%}
-
-    .reg-dot{position:absolute;z-index:2;pointer-events:none}
-    .reg-dot.tr{width:62px;height:62px;right:86px;top:56px}
-    .reg-dot.br{width:42px;height:42px;right:300px;bottom:95px}
-    .reg-dot img{width:100%;height:100%}
-
-    .reg-card{position:relative;z-index:3;width:340px;max-width:100%;background:#fff;border-radius:2px;
-      box-shadow:6px 10px 28px rgba(0,0,0,.12);padding:16px 18px 14px}
-
-    .reg-brand{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:2px;margin-bottom:8px}
-    .reg-brand .logo-mark{width:46px;height:46px}
-    .reg-brand .logo-text{display:flex;flex-direction:column;line-height:1}
-    .reg-brand .logo-text .mbti{font-weight:900;font-size:22px;letter-spacing:.04em;color:#2c2c2c}
-    .reg-brand .logo-text .sub{font-size:10px;color:#6b6b6b;letter-spacing:.2em;margin-top:4px}
-
-    .reg-error{margin:8px 0 6px}
-
-    /* 下方白色区域（表单承载区） */
-    .reg-panel{margin-top:8px;background:#fff;border-radius:2px;box-shadow:0 8px 20px rgba(240,168,48,.25);padding:12px 12px 14px;position:relative}
-    .reg-form{display:flex;flex-direction:column;gap:10px;position:relative;z-index:2;padding:2px 4px 0}
-
-    .field-pill{display:flex;align-items:center;gap:8px;height:24px;border-radius:999px;background:#f6d692;padding:0 12px;color:#fff}
-    .field-pill .lbl{width:72px;flex:0 0 72px;font-size:12px;font-weight:900;letter-spacing:.18em;text-align:left;text-shadow:0 1px 0 rgba(0,0,0,.06)}
-    .field-pill input,.field-pill select{flex:1;min-width:0;border:none;background:transparent;padding:0;height:100%;font-size:12px;color:#4a4a4a}
-    .field-pill input::placeholder{color:#c8c8c8}
-    .field-pill input:focus,.field-pill select:focus{outline:none;box-shadow:none}
-
-    .gender-wrap{display:flex;align-items:center;gap:12px;flex:1;color:#6b5840;font-size:12px;font-weight:700}
-    .gender-wrap label{display:flex;align-items:center;gap:4px;margin:0;color:#6b5840;font-size:12px;font-weight:700;white-space:nowrap}
-    .gender-wrap input[type="radio"]{margin:0}
-
-    .reg-illustration{position:relative;z-index:1;margin-top:10px}
-    .reg-illustration img{display:block;width:100%;height:auto}
-
-    .reg-actions{position:absolute;left:0;right:0;bottom:22px;display:flex;justify-content:center;gap:18px;z-index:2}
-    .reg-actions .btn-big{width:90px;height:26px;border-radius:999px;display:flex;align-items:center;justify-content:center;
-      background:#f4b72f;border:none;color:#fff;font-size:12px;font-weight:800;text-decoration:none;box-shadow:none}
-    .reg-actions .btn-big:hover{text-decoration:none;filter:brightness(.96)}
-
-    @media (max-width:520px){
-      .reg-ring,.reg-dot,.reg-bg{display:none}
-      .reg-card{width:100%;max-width:340px}
-      .field-pill .lbl{width:64px;flex-basis:64px;letter-spacing:.12em}
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: "Microsoft YaHei", sans-serif; background: #eaeaea; color: #333; overflow: hidden; }
+    /* 页面分屏背景与同心圆装饰 */
+    .page-wrap { position: relative; width: 100vw; height: 100vh; display: flex; align-items: center; justify-content: center; }
+    .bg-left { position: absolute; left: 0; top: 0; width: 50%; height: 100%; background: #f6dc9c; z-index: 0; }
+    .bg-right { position: absolute; right: 0; top: 0; width: 50%; height: 100%; background: #ececec; z-index: 0; }
+    /* 同心圆背景线 */
+    .rings { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 0; pointer-events: none; }
+    .ring { position: absolute; border: 1px solid rgba(220, 160, 40, 0.2); border-radius: 50%; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+    .ring-1 { width: 600px; height: 600px; }
+    .ring-2 { width: 900px; height: 900px; }
+    .ring-3 { width: 1300px; height: 1300px; border-color: rgba(220, 160, 40, 0.1); }
+    .ring-4 { width: 1800px; height: 1800px; border-color: rgba(220, 160, 40, 0.05); }
+    /* 周边小圆点 */
+    .deco-dot { position: absolute; border-radius: 50%; z-index: 1; pointer-events: none; }
+    .dot-1 { width: 60px; height: 60px; background: #eda629; right: 15%; top: 15%; }
+    .dot-2 { width: 40px; height: 40px; background: #e3a232; right: 25%; bottom: 15%; }
+    .dot-3 { width: 20px; height: 20px; background: #f4cf82; left: 20%; top: 20%; }
+    /* 中央卡片 */
+    .card { position: relative; z-index: 10; display: flex; width: 960px; max-width: 95vw; height: auto; max-height: 90vh; background: #fff; border-radius: 4px; box-shadow: 0 15px 35px rgba(200, 150, 40, 0.2); overflow: hidden; }
+    /* 卡片左侧插画区 */
+    .card-left { flex: 1; background: #fff; position: relative; display: flex; align-items: center; justify-content: center; min-height: 520px; }
+    .card-left .logo-top { position: absolute; top: 30px; left: 0; width: 100%; display: flex; justify-content: center; padding-right: 90px; }
+    .illustration { width: 85%; max-width: 340px; position: relative; z-index: 2; margin-bottom:20px; }
+    .badge { position: absolute; bottom: 45px; left: 50%; transform: translateX(-50%); background: #eda526; color: #fff; padding: 6px 20px; border-radius: 999px; font-weight: bold; font-size: 14px; letter-spacing: 1px; z-index: 3; box-shadow: 0 4px 10px rgba(237, 165, 38, 0.4); white-space: nowrap; }
+    /* 卡片右侧表单区 */
+    .card-right { flex: 1; background: #f8f9fb; display: flex; flex-direction: column; justify-content: flex-start; align-items: center; padding: 35px 50px; overflow-y: auto; }
+    .logo-main { display: flex; align-items: center; gap: 12px; margin-bottom: 25px; }
+    .logo-icon { width: 42px; height: 42px; fill: #eda526; }
+    .logo-text-wrap { display: flex; flex-direction: column; }
+    .logo-mbti { font-size: 32px; font-weight: 900; font-style: italic; color: #222; line-height: 1; letter-spacing: 2px; }
+    .logo-sub { font-size: 13px; font-weight: 700; color: #333; letter-spacing: 1px; margin-top: 2px; }
+    .form-wrap { width: 100%; max-width: 320px; }
+    .input-group { display: flex; align-items: center; position: relative; margin-bottom: 20px; }
+    .input-label { width: 70px; font-size: 14px; font-weight: bold; color: #555; text-align: right; margin-right: 15px; flex-shrink: 0; }
+    .input-field { flex: 1; min-width: 0; padding: 6px 0; border: none; border-bottom: 1px solid #eda526; background: transparent; font-size: 14px; color: #333; outline: none; letter-spacing: 1px; }
+    .input-field::placeholder { color: #a1a1a1; letter-spacing: 1px; font-size: 13px; }
+    .gender-wrap { display: flex; align-items: center; gap: 18px; flex: 1; padding: 6px 0; border-bottom: 1px solid rgba(237, 165, 38, 0.4); }
+    .gender-wrap label { display: flex; align-items: center; gap: 6px; font-size: 14px; cursor: pointer; color: #333; }
+    .error-msg { color: #ef4444; font-size: 12px; text-align: center; margin-top: -10px; margin-bottom: 15px; }
+    .action-btn { display: inline-flex; align-items: center; justify-content: center; width: 100%; height: 42px; border-radius: 999px; background: #eda526; color: #fff; font-size: 16px; font-weight: bold; letter-spacing: 6px; padding-left: 6px; border: none; cursor: pointer; text-decoration: none; margin-bottom: 15px; transition: all 0.2s; box-shadow: 0 4px 10px rgba(237, 165, 38, 0.3); }
+    .action-btn:hover { background: #df971b; transform: translateY(-1px); box-shadow: 0 6px 14px rgba(237, 165, 38, 0.4); text-decoration: none; color: #fff; }
+    .btn-light { background: #fff; color: #eda526; border: 1px solid #eda526; box-shadow: none; padding-left: 2px;}
+    .btn-light:hover { background: #fdfaf3; color: #df971b; border-color: #df971b; transform: translateY(-1px); box-shadow: none; }
+    input:-webkit-autofill { -webkit-box-shadow: 0 0 0 30px #f8f9fb inset !important; }
+    @media (max-width: 768px) {
+      .card-left, .bg-left, .rings, .deco-dot { display: none; }
+      .card { width: 440px; height: auto; max-height: 90vh; }
+      .bg-right { width: 100%; }
+      .card-right { background: #fff; padding: 40px 30px; }
     }
   </style>
 </head>
 <body>
-<div class="reg-scene">
-  <div class="reg-bg"></div>
-  <div class="reg-ring"><img src="${ctx}/static/img/ring-deco.svg" alt=""/></div>
-  <div class="reg-dot tr"><img src="${ctx}/static/img/dot-gold-lg.svg" alt=""/></div>
-  <div class="reg-dot br"><img src="${ctx}/static/img/dot-gold-sm.svg" alt=""/></div>
-  <div class="reg-card">
-      <div class="reg-brand" aria-label="MBTI职业性格测试系统">
-        <svg class="logo-mark" viewBox="0 0 64 64" role="img" aria-hidden="true">
-          <polygon points="32,4 56,18 56,46 32,60 8,46 8,18" fill="#f0a830"/>
-          <path d="M20 34c10-1 18-8 22-18 4 10 1 21-7 27-8 6-17 4-23 1" fill="none" stroke="#1f1f1f" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M30 22v28" stroke="#1f1f1f" stroke-width="2.2" stroke-linecap="round"/>
-          <path d="M30 30c6 0 11 2 16 6" stroke="#1f1f1f" stroke-width="2.2" stroke-linecap="round"/>
+<div class="page-wrap">
+  <div class="bg-left"></div>
+  <div class="bg-right"></div>
+  <div class="rings">
+    <div class="ring ring-1"></div>
+    <div class="ring ring-2"></div>
+    <div class="ring ring-3"></div>
+    <div class="ring ring-4"></div>
+  </div>
+  <div class="deco-dot dot-1"></div>
+  <div class="deco-dot dot-2"></div>
+  <div class="deco-dot dot-3"></div>
+  <div class="card">
+    <div class="card-left">
+      <div class="logo-top">
+        <svg viewBox="0 0 64 64" fill="#eda526" style="width:24px; height:24px; margin-right:8px;"><polygon points="32,4 56,18 56,46 32,60 8,46 8,18"/></svg>
+        <span style="font-size:12px; font-weight:bold; letter-spacing:1px; line-height:24px;">职业性格测试系统</span>
+      </div>
+      <img class="illustration" src="${ctx}/static/img/register1.png" alt="Illustration" />
+      <div class="badge">MBTI职业性格测试系统</div>
+    </div>
+    <div class="card-right">
+      <div class="logo-main">
+        <svg class="logo-icon" viewBox="0 0 64 64">
+          <polygon points="32,4 56,18 56,46 32,60 8,46 8,18"/>
+          <path d="M20 34c10-1 18-8 22-18 4 10 1 21-7 27-8 6-17 4-23 1" fill="none" stroke="#222" stroke-width="2" stroke-linecap="round"/>
+          <path d="M30 22v28" stroke="#222" stroke-width="2" stroke-linecap="round"/>
+          <path d="M30 30c6 0 11 2 16 6" stroke="#222" stroke-width="2" stroke-linecap="round"/>
         </svg>
-        <div class="logo-text">
-          <div class="mbti">MBTI</div>
-          <div class="sub">职业性格测试系统</div>
+        <div class="logo-text-wrap">
+          <div class="logo-mbti">MBTI</div>
+          <div class="logo-sub">账号注册</div>
         </div>
       </div>
-
-      <c:if test="${not empty error}">
-        <div class="alert alert-error reg-error"><c:out value="${error}"/></div>
-      </c:if>
-
-      <div class="reg-panel">
-        <form method="post" action="${ctx}/register" class="reg-form" autocomplete="off">
-          <div class="field-pill">
-            <div class="lbl">手机号:</div>
-            <input name="login" value="<c:out value='${login}'/>" placeholder="请输入手机号" required />
+      <div class="form-wrap">
+        <c:if test="${not empty error}">
+          <div class="error-msg"><c:out value="${error}"/></div>
+        </c:if>
+        <form method="post" action="<c:url value='/register'/>" autocomplete="off">
+          <div class="input-group">
+            <div class="input-label">手机号</div>
+            <input type="text" name="login" class="input-field" placeholder="请输入手机号" value="<c:out value='${login}'/>" required autofocus />
           </div>
-
-          <div class="field-pill">
-            <div class="lbl">密 码:</div>
-            <input name="passwd" type="password" placeholder="请输入密码" required />
+          <div class="input-group">
+            <div class="input-label">密 码</div>
+            <input type="password" name="passwd" class="input-field" placeholder="请设置密码" required />
           </div>
-
-          <div class="field-pill">
-            <div class="lbl">确认密码:</div>
-            <input name="passwd2" type="password" placeholder="请再次输入密码" required />
+          <div class="input-group">
+            <div class="input-label">确认密码</div>
+            <input type="password" name="passwd2" class="input-field" placeholder="请再次确认密码" required />
           </div>
-
-          <div class="field-pill">
-            <div class="lbl">姓 名:</div>
-            <input name="name" value="<c:out value='${name}'/>" placeholder="请输入姓名" required />
+          <div class="input-group">
+            <div class="input-label">姓 名</div>
+            <input type="text" name="name" class="input-field" placeholder="请输入真实姓名" value="<c:out value='${name}'/>" required />
           </div>
-
-          <div class="field-pill">
-            <div class="lbl">性 别:</div>
+          <div class="input-group">
+            <div class="input-label">性 别</div>
             <div class="gender-wrap">
               <label>
-                <input type="radio" name="gender" value="M" <c:if test="${empty gender || gender == 'M'}">checked</c:if> />
-                男
+                <input type="radio" name="gender" value="M" <c:if test="${empty gender || gender == 'M'}">checked</c:if> /> 男
               </label>
               <label>
-                <input type="radio" name="gender" value="F" <c:if test="${gender == 'F'}">checked</c:if> />
-                女
+                <input type="radio" name="gender" value="F" <c:if test="${gender == 'F'}">checked</c:if> /> 女
               </label>
             </div>
           </div>
-
-          <div class="field-pill">
-            <div class="lbl">批 次:</div>
-            <select name="teamId" required>
+          <div class="input-group">
+            <div class="input-label">批 次</div>
+            <select name="teamId" class="input-field" required>
               <option value="">请选择批次</option>
               <c:forEach items="${teams}" var="t">
                 <option value="${t.id}" <c:if test="${not empty teamId && teamId == (t.id)}">selected</c:if>><c:out value="${t.name}"/></option>
               </c:forEach>
             </select>
           </div>
-
-          <div class="reg-illustration" aria-hidden="true">
-            <img src="${ctx}/static/img/register1.png" alt="" />
-            <div class="reg-actions">
-              <button class="btn btn-warn btn-big" type="submit">注册</button>
-              <a class="btn btn-warn btn-big" href="${ctx}/login">返回</a>
-            </div>
+          <div style="margin-top: 30px;">
+            <button type="submit" class="action-btn">立即注册</button>
+            <a href="${ctx}/login" class="action-btn btn-light" style="letter-spacing: 2px;">返回登录</a>
           </div>
         </form>
       </div>
+    </div>
   </div>
 </div>
 </body>

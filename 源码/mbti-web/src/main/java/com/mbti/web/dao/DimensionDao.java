@@ -84,14 +84,29 @@ public class DimensionDao {
     }
   }
 
-  public void update(int id, String title, String depict) throws SQLException {
-    String sql = "update personality_dimension set title=?, depict=? where id=?";
+  public void update(int id, int assessmentId, String title, String depict) throws SQLException {
+    String sql = "update personality_dimension set title=?, depict=?, assessment_id=? where id=?";
     try (Connection conn = Db.getConnection();
          PreparedStatement ps = conn.prepareStatement(sql)) {
       ps.setString(1, title);
       ps.setString(2, depict);
-      ps.setInt(3, id);
+      ps.setInt(3, assessmentId);
+      ps.setInt(4, id);
       ps.executeUpdate();
+    }
+  }
+
+  public int countQuestionRefs(int dimensionId) throws SQLException {
+    String sql = "select count(*) as c from question_dimension where dimension_id=?";
+    try (Connection conn = Db.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+      ps.setInt(1, dimensionId);
+      try (ResultSet rs = ps.executeQuery()) {
+        if (!rs.next()) {
+          return 0;
+        }
+        return rs.getInt("c");
+      }
     }
   }
 

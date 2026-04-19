@@ -84,6 +84,114 @@
   </servlet-mapping>
 
   <servlet>
+    <servlet-name>adminTeamCreateServlet</servlet-name>
+    <servlet-class>com.mbti.web.admin.AdminTeamCreateServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>adminTeamCreateServlet</servlet-name>
+    <url-pattern>/admin/teams/create</url-pattern>
+  </servlet-mapping>
+
+  <servlet>
+    <servlet-name>adminTeamSaveServlet</servlet-name>
+    <servlet-class>com.mbti.web.admin.AdminTeamSaveServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>adminTeamSaveServlet</servlet-name>
+    <url-pattern>/admin/teams/save</url-pattern>
+  </servlet-mapping>
+
+  <servlet>
+    <servlet-name>adminTeamViewServlet</servlet-name>
+    <servlet-class>com.mbti.web.admin.AdminTeamViewServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>adminTeamViewServlet</servlet-name>
+    <url-pattern>/admin/teams/view</url-pattern>
+  </servlet-mapping>
+
+  <servlet>
+    <servlet-name>adminTeamEditServlet</servlet-name>
+    <servlet-class>com.mbti.web.admin.AdminTeamEditServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>adminTeamEditServlet</servlet-name>
+    <url-pattern>/admin/teams/edit</url-pattern>
+  </servlet-mapping>
+
+  <servlet>
+    <servlet-name>adminTeamUpdateServlet</servlet-name>
+    <servlet-class>com.mbti.web.admin.AdminTeamUpdateServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>adminTeamUpdateServlet</servlet-name>
+    <url-pattern>/admin/teams/update</url-pattern>
+  </servlet-mapping>
+
+  <servlet>
+    <servlet-name>adminTeamDeleteServlet</servlet-name>
+    <servlet-class>com.mbti.web.admin.AdminTeamDeleteServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>adminTeamDeleteServlet</servlet-name>
+    <url-pattern>/admin/teams/delete</url-pattern>
+  </servlet-mapping>
+
+  <servlet>
+    <servlet-name>adminTeamPersonnelListServlet</servlet-name>
+    <servlet-class>com.mbti.web.admin.AdminTeamPersonnelListServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>adminTeamPersonnelListServlet</servlet-name>
+    <url-pattern>/admin/teams/personnel</url-pattern>
+  </servlet-mapping>
+
+  <servlet>
+    <servlet-name>adminTeamPersonnelViewServlet</servlet-name>
+    <servlet-class>com.mbti.web.admin.AdminTeamPersonnelViewServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>adminTeamPersonnelViewServlet</servlet-name>
+    <url-pattern>/admin/teams/personnel/view</url-pattern>
+  </servlet-mapping>
+
+  <servlet>
+    <servlet-name>adminTeamPersonnelAddServlet</servlet-name>
+    <servlet-class>com.mbti.web.admin.AdminTeamPersonnelAddServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>adminTeamPersonnelAddServlet</servlet-name>
+    <url-pattern>/admin/teams/personnel/add</url-pattern>
+  </servlet-mapping>
+
+  <servlet>
+    <servlet-name>adminTeamPersonnelImportServlet</servlet-name>
+    <servlet-class>com.mbti.web.admin.AdminTeamPersonnelImportServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>adminTeamPersonnelImportServlet</servlet-name>
+    <url-pattern>/admin/teams/personnel/import</url-pattern>
+  </servlet-mapping>
+
+  <servlet>
+    <servlet-name>adminTeamPersonnelEditServlet</servlet-name>
+    <servlet-class>com.mbti.web.admin.AdminTeamPersonnelEditServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>adminTeamPersonnelEditServlet</servlet-name>
+    <url-pattern>/admin/teams/personnel/edit</url-pattern>
+  </servlet-mapping>
+
+  <servlet>
+    <servlet-name>adminTeamPersonnelDeleteServlet</servlet-name>
+    <servlet-class>com.mbti.web.admin.AdminTeamPersonnelDeleteServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>adminTeamPersonnelDeleteServlet</servlet-name>
+    <url-pattern>/admin/teams/personnel/delete</url-pattern>
+  </servlet-mapping>
+
+  <servlet>
     <servlet-name>adminDimensionsServlet</servlet-name>
     <servlet-class>com.mbti.web.admin.AdminDimensionsServlet</servlet-class>
   </servlet>
@@ -144,6 +252,15 @@
   <servlet-mapping>
     <servlet-name>adminSeedDemoServlet</servlet-name>
     <url-pattern>/admin/seed-demo</url-pattern>
+  </servlet-mapping>
+
+  <servlet>
+    <servlet-name>adminExamRecordsServlet</servlet-name>
+    <servlet-class>com.mbti.web.admin.AdminExamRecordsServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>adminExamRecordsServlet</servlet-name>
+    <url-pattern>/admin/exam-records</url-pattern>
   </servlet-mapping>
 
   <servlet>

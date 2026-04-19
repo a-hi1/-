@@ -4,16 +4,18 @@ import com.mbti.web.model.Schedule;
 import com.mbti.web.util.Db;
 
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ScheduleDao {
   public List<Schedule> listAvailableForTeam(int teamId) throws SQLException {
-    String sql = "select s.id, s.begin_date, s.end_date, s.duration, s.assessment_id, s.team_id, s.question_number, s.status, " +
+    String sql = "select s.id, s.create_date, s.begin_date, s.end_date, s.duration, s.assessment_id, s.team_id, s.question_number, s.status, " +
       "a.title as assessment_title, t.name as team_name " +
       "from schedules s left join assessments a on a.id=s.assessment_id left join class_teams t on t.id=s.team_id " +
       "where s.team_id=? and t.status=1 and s.status=2 and s.begin_date<=now() and s.end_date>=now() order by s.id desc";
@@ -31,7 +33,7 @@ public class ScheduleDao {
   }
 
   public Schedule findById(int id) throws SQLException {
-    String sql = "select s.id, s.begin_date, s.end_date, s.duration, s.assessment_id, s.team_id, s.question_number, s.status, " +
+    String sql = "select s.id, s.create_date, s.begin_date, s.end_date, s.duration, s.assessment_id, s.team_id, s.question_number, s.status, " +
         "a.title as assessment_title, t.name as team_name " +
         "from schedules s left join assessments a on a.id=s.assessment_id left join class_teams t on t.id=s.team_id where s.id=?";
     try (Connection conn = Db.getConnection();
@@ -47,7 +49,7 @@ public class ScheduleDao {
   }
 
   public List<Schedule> listForTeam(Integer teamId) throws SQLException {
-    String base = "select s.id, s.begin_date, s.end_date, s.duration, s.assessment_id, s.team_id, s.question_number, s.status, " +
+    String base = "select s.id, s.create_date, s.begin_date, s.end_date, s.duration, s.assessment_id, s.team_id, s.question_number, s.status, " +
       "a.title as assessment_title, t.name as team_name " +
       "from schedules s left join assessments a on a.id=s.assessment_id left join class_teams t on t.id=s.team_id ";
 
@@ -84,8 +86,12 @@ public class ScheduleDao {
     s.setAssessmentTitle(rs.getString("assessment_title"));
     s.setTeamName(rs.getString("team_name"));
 
+    Timestamp c = rs.getTimestamp("create_date");
     Timestamp b = rs.getTimestamp("begin_date");
     Timestamp e = rs.getTimestamp("end_date");
+    if (c != null) {
+      s.setCreateDate(c.toLocalDateTime());
+    }
     if (b != null) {
       s.setBeginDate(b.toLocalDateTime());
     }
@@ -95,10 +101,10 @@ public class ScheduleDao {
     return s;
   }
 
-  public void create(int teamId, int assessmentId, String beginDate, String endDate,
+  public void create(int teamId, int assessmentId, String beginDate, String endDate, String createDate,
                      int duration, int questionNumber, int status, int creatorId) throws SQLException {
     String sql = "insert into schedules(begin_date, end_date, duration, assessment_id, team_id, question_number, status, creator_id, create_date) " +
-        "values(?,?,?,?,?,?,?,?,curdate())";
+        "values(?,?,?,?,?,?,?,?,?)";
     try (Connection conn = Db.getConnection();
          PreparedStatement ps = conn.prepareStatement(sql)) {
       ps.setTimestamp(1, parseTimestamp(beginDate));
@@ -109,23 +115,25 @@ public class ScheduleDao {
       ps.setInt(6, questionNumber);
       ps.setInt(7, status);
       ps.setInt(8, creatorId);
+      ps.setDate(9, parseDate(createDate));
       ps.executeUpdate();
     }
   }
 
-  public void update(int id, int teamId, int assessmentId, String beginDate, String endDate,
+  public void update(int id, int teamId, int assessmentId, String beginDate, String endDate, String createDate,
                      int duration, int questionNumber, int status) throws SQLException {
-    String sql = "update schedules set begin_date=?, end_date=?, duration=?, assessment_id=?, team_id=?, question_number=?, status=? where id=?";
+    String sql = "update schedules set begin_date=?, end_date=?, create_date=?, duration=?, assessment_id=?, team_id=?, question_number=?, status=? where id=?";
     try (Connection conn = Db.getConnection();
          PreparedStatement ps = conn.prepareStatement(sql)) {
       ps.setTimestamp(1, parseTimestamp(beginDate));
       ps.setTimestamp(2, parseTimestamp(endDate));
-      ps.setInt(3, duration);
-      ps.setInt(4, assessmentId);
-      ps.setInt(5, teamId);
-      ps.setInt(6, questionNumber);
-      ps.setInt(7, status);
-      ps.setInt(8, id);
+      ps.setDate(3, parseDate(createDate));
+      ps.setInt(4, duration);
+      ps.setInt(5, assessmentId);
+      ps.setInt(6, teamId);
+      ps.setInt(7, questionNumber);
+      ps.setInt(8, status);
+      ps.setInt(9, id);
       ps.executeUpdate();
     }
   }
@@ -138,12 +146,33 @@ public class ScheduleDao {
     return dt.toString().substring(0, 16);
   }
 
+  public static String toDate(java.time.LocalDateTime dt) {
+    if (dt == null) {
+      return "";
+    }
+    return dt.toLocalDate().toString();
+  }
+
   public void delete(int id) throws SQLException {
     String sql = "delete from schedules where id=?";
     try (Connection conn = Db.getConnection();
          PreparedStatement ps = conn.prepareStatement(sql)) {
       ps.setInt(1, id);
       ps.executeUpdate();
+    }
+  }
+
+  public int countExamRefs(int scheduleId) throws SQLException {
+    String sql = "select count(1) from exams where schedule_id=?";
+    try (Connection conn = Db.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+      ps.setInt(1, scheduleId);
+      try (ResultSet rs = ps.executeQuery()) {
+        if (!rs.next()) {
+          return 0;
+        }
+        return rs.getInt(1);
+      }
     }
   }
 
@@ -160,5 +189,13 @@ public class ScheduleDao {
       }
     }
     return Timestamp.valueOf(s);
+  }
+
+  private Date parseDate(String input) {
+    String s = input == null ? "" : input.trim();
+    if (s.isEmpty()) {
+      return Date.valueOf(LocalDate.now());
+    }
+    return Date.valueOf(LocalDate.parse(s));
   }
 }

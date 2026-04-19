@@ -7,6 +7,8 @@ public class Question {
   private int id;
   private int type;
   private String title;
+  private String hint;
+  private int status;
   private int assessmentId;
   private int dimensionId;
 
@@ -34,6 +36,22 @@ public class Question {
 
   public void setTitle(String title) {
     this.title = title;
+  }
+
+  public String getHint() {
+    return hint;
+  }
+
+  public void setHint(String hint) {
+    this.hint = hint;
+  }
+
+  public int getStatus() {
+    return status;
+  }
+
+  public void setStatus(int status) {
+    this.status = status;
   }
 
   public int getAssessmentId() {

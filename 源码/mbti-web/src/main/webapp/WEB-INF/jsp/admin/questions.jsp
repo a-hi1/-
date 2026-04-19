@@ -5,9 +5,14 @@
 
 <c:if test="${not empty assessmentId}">
   <div class="card" style="margin-bottom:14px">
+    <c:if test="${not empty error}">
+      <div style="color:#b42318; margin-bottom:10px;"><c:out value="${error}"/></div>
+    </c:if>
     <form method="post" action="${pageContext.request.contextPath}/admin/questions" class="grid" style="align-items:end">
       <input type="hidden" name="action" value="save" />
       <input type="hidden" name="assessmentId" value="${assessmentId}" />
+      <input type="hidden" name="status" value="${status}" />
+      <input type="hidden" name="dimensionId" value="${dimensionId}" />
       <input type="hidden" name="id" value="${edit.id}" />
       <div class="col-12 muted" style="margin-bottom:4px">
         <c:choose>
@@ -54,19 +59,36 @@
 
 <div class="card" style="margin-bottom:12px">
   <div class="grid">
-    <div class="col-6">
-      <form method="get" action="${pageContext.request.contextPath}/admin/questions">
-        <div class="form-row">
-          <label>选择测评</label>
-          <select name="assessmentId" onchange="this.form.submit()">
+    <div class="col-8">
+      <form method="get" action="${pageContext.request.contextPath}/admin/questions" style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">
+        <div>
+          <label>考核类型</label>
+          <select name="assessmentId">
             <c:forEach items="${assessments}" var="a">
               <option value="${a.id}" <c:if test="${a.id == assessmentId}">selected</c:if>>${a.title}</option>
             </c:forEach>
           </select>
         </div>
+        <div>
+          <label>状态</label>
+          <select name="status">
+            <option value="2" <c:if test="${status == 2}">selected</c:if>>可用</option>
+            <option value="1" <c:if test="${status == 1}">selected</c:if>>停用</option>
+          </select>
+        </div>
+        <div>
+          <label>维度</label>
+          <select name="dimensionId">
+            <option value="">全部维度</option>
+            <c:forEach items="${dimensions}" var="d">
+              <option value="${d.id}" <c:if test="${dimensionId == d.id}">selected</c:if>><c:out value="${d.title}"/></option>
+            </c:forEach>
+          </select>
+        </div>
+        <button class="btn btn-primary" type="submit">查看本考核类型考题</button>
       </form>
     </div>
-    <div class="col-6" style="display:flex;align-items:flex-end;justify-content:flex-end">
+    <div class="col-4" style="display:flex;align-items:flex-end;justify-content:flex-end">
       <c:if test="${not empty assessmentId}">
         <form method="post" action="${pageContext.request.contextPath}/admin/seed-demo" style="display:inline-block;margin-right:10px">
           <input type="hidden" name="assessmentId" value="${assessmentId}" />
@@ -86,7 +108,7 @@
       <th>题目</th>
       <th style="width:220px">维度</th>
       <th>选项（标注正确项）</th>
-      <th style="width:120px">操作</th>
+      <th style="min-width:160px; text-align:right; padding-right:24px; white-space:nowrap;">操作</th>
     </tr>
     <c:forEach items="${questions}" var="q" varStatus="st">
       <tr>
@@ -109,14 +131,17 @@
             </c:forEach>
           </div>
         </td>
-        <td>
-          <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <a class="btn" href="${pageContext.request.contextPath}/admin/questions?assessmentId=${assessmentId}&id=${q.id}">编辑</a>
-            <form method="post" action="${pageContext.request.contextPath}/admin/questions" style="display:inline">
+        <td style="text-align:right; padding-right:24px; white-space:nowrap;">
+          <div style="display:flex; justify-content:flex-end; align-items:center; gap:8px;">
+            <a class="btn btn-light btn-sm" href="${pageContext.request.contextPath}/admin/questions?assessmentId=${assessmentId}&status=${status}&dimensionId=${dimensionId}&id=${q.id}&view=1" style="padding:5px 12px; margin:0;">查看</a>
+            <a class="btn btn-view btn-sm" href="${pageContext.request.contextPath}/admin/questions?assessmentId=${assessmentId}&id=${q.id}" style="padding:5px 12px; margin:0;">编辑</a>
+            <form method="post" action="${pageContext.request.contextPath}/admin/questions" style="margin:0;">
               <input type="hidden" name="action" value="delete" />
               <input type="hidden" name="assessmentId" value="${assessmentId}" />
+              <input type="hidden" name="status" value="${status}" />
+              <input type="hidden" name="dimensionId" value="${dimensionId}" />
               <input type="hidden" name="id" value="${q.id}" />
-              <button class="btn" type="submit" onclick="return confirm('确认删除该题目？')">删除</button>
+              <button class="btn btn-danger btn-sm" type="submit" style="padding:5px 12px; margin:0; white-space:nowrap;" onclick="return confirm('确认删除该题目？')">删除</button>
             </form>
           </div>
         </td>

@@ -141,31 +141,31 @@
 <div class="card">
   <table class="table">
     <tr>
-      <th style="width:80px">人员ID</th>
+      <th style="width:80px; text-align:center;">人员ID</th>
       <th style="width:160px">登录名</th>
       <th style="width:160px">真实姓名</th>
       <th style="width:160px">批次</th>
-      <th style="width:120px">测评状态</th>
-      <th style="width:140px">最近测评时间</th>
-      <th style="width:180px">测评类型</th>
-      <th style="width:120px">结果</th>
-      <th style="width:120px">操作</th>
+      <th style="width:120px; text-align:center;">测评状态</th>
+      <th style="width:160px; text-align:center;">最近测评时间</th>
+      <th style="width:200px">测评类型</th>
+      <th style="width:120px; text-align:center;">结果</th>
+      <th style="min-width:140px; text-align:right; padding-right:24px; white-space:nowrap;">操作</th>
     </tr>
 
     <c:forEach items="${rows}" var="r">
       <tr>
-        <td>${r.personnelId}</td>
-        <td><c:out value="${r.login}"/></td>
+        <td style="text-align:center; color:#666;">${r.personnelId}</td>
+        <td style="font-weight:500;"><c:out value="${r.login}"/></td>
         <td><c:out value="${r.name}"/></td>
         <td><c:out value="${r.teamName}"/></td>
-        <td>
+        <td style="text-align:center;">
           <c:choose>
             <c:when test="${empty r.examId}"><span class="tag tag-gray">未测评</span></c:when>
-            <c:when test="${empty r.endTime}"><span class="tag tag-gray">进行中</span></c:when>
+            <c:when test="${empty r.endTime}"><span class="tag tag-blue">进行中</span></c:when>
             <c:otherwise><span class="tag tag-green">已完成</span></c:otherwise>
           </c:choose>
         </td>
-        <td>
+        <td style="text-align:center; color:#777;">
           <c:choose>
             <c:when test="${not empty r.endTime}">${r.endTime}</c:when>
             <c:when test="${not empty r.beginTime}">${r.beginTime}</c:when>
@@ -178,16 +178,18 @@
             <c:otherwise><span class="muted">-</span></c:otherwise>
           </c:choose>
         </td>
-        <td>
+        <td style="text-align:center;">
           <c:choose>
-            <c:when test="${not empty r.result}"><c:out value="${r.result}"/></c:when>
+            <c:when test="${not empty r.result}"><span class="tag tag-primary"><c:out value="${r.result}"/></span></c:when>
             <c:otherwise><span class="muted">-</span></c:otherwise>
           </c:choose>
         </td>
-        <td>
+        <td style="text-align:right; padding-right:24px; white-space:nowrap;">
           <c:choose>
             <c:when test="${not empty r.examId && not empty r.endTime && not empty r.result}">
-              <a class="btn btn-view" href="${pageContext.request.contextPath}/test/result?examId=${r.examId}">查看</a>
+              <div style="display:flex; justify-content:flex-end; align-items:center; gap:8px;">
+                <a class="btn btn-view btn-sm" href="${pageContext.request.contextPath}/test/result?examId=${r.examId}" style="padding:5px 12px; margin:0;" target="_blank">查看报告</a>
+              </div>
             </c:when>
             <c:when test="${not empty r.examId && empty r.endTime}">
               <span class="muted">未完成</span>

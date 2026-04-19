@@ -18,6 +18,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashSet;
@@ -35,6 +36,19 @@ public class AdminSchedulesServlet extends HttpServlet {
   @Override
   protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
     try {
+      String viewStr = val(req.getParameter("view"));
+      String idStr = val(req.getParameter("id"));
+      if ("1".equals(viewStr) && !idStr.isEmpty()) {
+        Schedule s = scheduleDao.findById(Integer.parseInt(idStr));
+        if (s == null) {
+          resp.sendRedirect(req.getContextPath() + "/admin/schedules");
+          return;
+        }
+        req.setAttribute("s", s);
+        req.getRequestDispatcher("/WEB-INF/jsp/admin/schedule_view.jsp").forward(req, resp);
+        return;
+      }
+
       String teamIdStr = val(req.getParameter("teamId"));
       Integer teamId = teamIdStr.isEmpty() ? null : Integer.parseInt(teamIdStr);
       req.setAttribute("teamId", teamId);
@@ -43,7 +57,7 @@ public class AdminSchedulesServlet extends HttpServlet {
       req.setAttribute("teams", teamDao.listAll());
       req.setAttribute("assessments", assessmentDao.listAll());
 
-      String idStr = val(req.getParameter("id"));
+      idStr = val(req.getParameter("id"));
       if (!idStr.isEmpty()) {
         req.setAttribute("edit", scheduleDao.findById(Integer.parseInt(idStr)));
       }
@@ -67,10 +81,25 @@ public class AdminSchedulesServlet extends HttpServlet {
         String begin = req.getParameter("beginDate");
         String end = req.getParameter("endDate");
         int duration = Integer.parseInt(req.getParameter("duration"));
+        String createDate = val(req.getParameter("createDate"));
         int questionNumber = Integer.parseInt(req.getParameter("questionNumber"));
         int status = Integer.parseInt(req.getParameter("status"));
 
-        String err = validateTimeRange(begin, end);
+        if (createDate.isEmpty()) {
+          createDate = LocalDate.now().toString();
+        }
+
+        String err = null;
+        if (duration <= 0) {
+          err = "考试时长必须大于0分钟";
+        } else if (questionNumber <= 0 || questionNumber % 4 != 0) {
+          err = "试题数量必须为4的倍数";
+        } else if (status < 1 || status > 3) {
+          err = "状态参数不合法";
+        }
+        if (err == null) {
+          err = validateTimeRange(begin, end);
+        }
         if (err == null) {
           err = validateAssessment(assessmentId, questionNumber, status);
         }
@@ -85,6 +114,7 @@ public class AdminSchedulesServlet extends HttpServlet {
           edit.setAssessmentId(assessmentId);
           edit.setBeginDate(parseDatetimeLocal(begin));
           edit.setEndDate(parseDatetimeLocal(end));
+          edit.setCreateDate(parseDateLocal(createDate));
           edit.setDuration(duration);
           edit.setQuestionNumber(questionNumber);
           edit.setStatus(status);
@@ -97,12 +127,21 @@ public class AdminSchedulesServlet extends HttpServlet {
         }
 
         if (idStr.isEmpty()) {
-          scheduleDao.create(teamId, assessmentId, begin, end, duration, questionNumber, status, u.getId());
+          scheduleDao.create(teamId, assessmentId, begin, end, createDate, duration, questionNumber, status, u.getId());
         } else {
-          scheduleDao.update(Integer.parseInt(idStr), teamId, assessmentId, begin, end, duration, questionNumber, status);
+          scheduleDao.update(Integer.parseInt(idStr), teamId, assessmentId, begin, end, createDate, duration, questionNumber, status);
         }
       } else if ("delete".equals(action)) {
         int id = Integer.parseInt(req.getParameter("id"));
+        int refs = scheduleDao.countExamRefs(id);
+        if (refs > 0) {
+          req.setAttribute("error", "该测试安排已产生 " + refs + " 条考试记录，不能删除");
+          req.setAttribute("schedules", scheduleDao.listForTeam(null));
+          req.setAttribute("teams", teamDao.listAll());
+          req.setAttribute("assessments", assessmentDao.listAll());
+          req.getRequestDispatcher("/WEB-INF/jsp/admin/schedules.jsp").forward(req, resp);
+          return;
+        }
         scheduleDao.delete(id);
       }
 
@@ -180,5 +219,13 @@ public class AdminSchedulesServlet extends HttpServlet {
     }
     // 兜底：允许传入带秒的 ISO
     return LocalDateTime.parse(v);
+  }
+
+  private LocalDateTime parseDateLocal(String s) {
+    String v = val(s);
+    if (v.isEmpty()) {
+      return null;
+    }
+    return LocalDate.parse(v).atStartOfDay();
   }
 }

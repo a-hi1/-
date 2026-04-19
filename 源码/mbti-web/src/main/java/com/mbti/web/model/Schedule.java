@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 
 public class Schedule {
   private int id;
+  private LocalDateTime createDate;
   private LocalDateTime beginDate;
   private LocalDateTime endDate;
   private int duration;
@@ -21,6 +22,14 @@ public class Schedule {
 
   public void setId(int id) {
     this.id = id;
+  }
+
+  public LocalDateTime getCreateDate() {
+    return createDate;
+  }
+
+  public void setCreateDate(LocalDateTime createDate) {
+    this.createDate = createDate;
   }
 
   public LocalDateTime getBeginDate() {

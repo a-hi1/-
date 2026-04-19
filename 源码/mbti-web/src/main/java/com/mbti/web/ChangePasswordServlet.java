@@ -57,7 +57,7 @@ public class ChangePasswordServlet extends HttpServlet {
       if (refreshed != null) {
         req.getSession().setAttribute(Web.SESSION_USER, refreshed);
       }
-      req.setAttribute("success", "密码修改成功");
+      req.setAttribute("ok", "密码修改成功");
       req.getRequestDispatcher("/WEB-INF/jsp/password.jsp").forward(req, resp);
     } catch (Exception e) {
       throw new ServletException(e);

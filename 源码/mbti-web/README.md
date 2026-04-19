@@ -22,6 +22,27 @@
 	- `mvn -f .\pom.xml org.eclipse.jetty:jetty-maven-plugin:9.4.54.v20240208:run`
 - 访问：`http://127.0.0.1:8080/mbti-web/`
 
+## 任务43：项目编译构建和项目部署（本地）
+
+### 1) 项目编译构建流程
+1. 进入项目目录：`mbti-web`
+2. 执行构建脚本（默认跳过测试）：`./build-war.ps1`
+3. 构建产物：`target/mbti-web.war`
+
+如需带测试构建：
+- `./build-war.ps1 -SkipTests:$false`
+
+### 2) 项目部署流程（本地 Tomcat）
+1. 确认 Tomcat 安装目录，例如：`D:/tomcat/apache-tomcat-9.0.xx`
+2. 执行部署脚本（会先构建再复制 WAR）：
+	- `./deploy-local.ps1 -TomcatWebapps "D:/tomcat/apache-tomcat-9.0.xx/webapps"`
+3. 启动 Tomcat（若尚未启动）
+4. 访问：`http://127.0.0.1:8080/mbti-web/`
+
+说明：
+- `deploy-local.ps1` 会覆盖旧的 `mbti-web.war`，并删除旧的 `webapps/mbti-web` 解压目录，避免部署残留。
+- 如果你仅本地调试，不走 Tomcat，也可继续使用 `./start-jetty.ps1` 一键启动。
+
 > 说明：某些环境下 `mvn jetty:run` 会出现 `No plugin found for prefix 'jetty'`，
 > 使用上面的完整插件坐标可避免该问题。
 

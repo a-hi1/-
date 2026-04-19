@@ -2,6 +2,7 @@ package com.mbti.web.dao;
 
 import com.mbti.web.model.Choice;
 import com.mbti.web.model.Question;
+import com.mbti.web.model.QuestionQuery;
 import com.mbti.web.util.Db;
 
 import java.sql.Connection;
@@ -15,6 +16,57 @@ import java.util.List;
 import java.util.Map;
 
 public class QuestionDao {
+  public int countUsage(int questionId) throws SQLException {
+    String sqlExam = "select count(*) as c from exam_questions where question_id=?";
+    String sqlPaper = "select count(*) as c from paper_questions where question_id=?";
+    int total = 0;
+    try (Connection conn = Db.getConnection()) {
+      try (PreparedStatement ps = conn.prepareStatement(sqlExam)) {
+        ps.setInt(1, questionId);
+        try (ResultSet rs = ps.executeQuery()) {
+          if (rs.next()) {
+            total += rs.getInt("c");
+          }
+        }
+      }
+      try (PreparedStatement ps = conn.prepareStatement(sqlPaper)) {
+        ps.setInt(1, questionId);
+        try (ResultSet rs = ps.executeQuery()) {
+          if (rs.next()) {
+            total += rs.getInt("c");
+          }
+        }
+      }
+    }
+    return total;
+  }
+
+  public Question findById(int questionId) throws SQLException {
+    String sql = "select id, type, title, hint, status, assessment_id from questions where id=?";
+    try (Connection conn = Db.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+      ps.setInt(1, questionId);
+      try (ResultSet rs = ps.executeQuery()) {
+        if (!rs.next()) {
+          return null;
+        }
+        Question q = new Question();
+        q.setId(rs.getInt("id"));
+        q.setType(rs.getInt("type"));
+        q.setTitle(rs.getString("title"));
+        q.setHint(rs.getString("hint"));
+        q.setStatus(rs.getInt("status"));
+        q.setAssessmentId(rs.getInt("assessment_id"));
+
+        Map<Integer, Question> byId = new HashMap<>();
+        byId.put(q.getId(), q);
+        fillDimensions(byId);
+        fillChoices(byId);
+        return q;
+      }
+    }
+  }
+
   public int countByAssessment(int assessmentId) throws SQLException {
     String sql = "select count(*) as c from questions where assessment_id=?";
     try (Connection conn = Db.getConnection();
@@ -116,7 +168,7 @@ public class QuestionDao {
   }
 
   public Question findByIdWithChoices(int questionId) throws SQLException {
-    String sql = "select id, type, title, assessment_id from questions where id=?";
+    String sql = "select id, type, title, hint, status, assessment_id from questions where id=?";
     try (Connection conn = Db.getConnection();
          PreparedStatement ps = conn.prepareStatement(sql)) {
       ps.setInt(1, questionId);
@@ -128,6 +180,8 @@ public class QuestionDao {
         q.setId(rs.getInt("id"));
         q.setType(rs.getInt("type"));
         q.setTitle(rs.getString("title"));
+        q.setHint(rs.getString("hint"));
+        q.setStatus(rs.getInt("status"));
         q.setAssessmentId(rs.getInt("assessment_id"));
 
         Map<Integer, Question> byId = new HashMap<>();
@@ -244,8 +298,67 @@ public class QuestionDao {
     return questions;
   }
 
+  public List<Question> findByCondition(QuestionQuery query) throws SQLException {
+    StringBuilder sql = new StringBuilder(
+      "select distinct q.id, q.type, q.title, q.hint, q.status, q.assessment_id " +
+      "from questions q left join question_dimension qd on q.id=qd.question_id where 1=1");
+    List<Object> params = new ArrayList<>();
+
+    if (query.getAssessmentId() != null) {
+      sql.append(" and q.assessment_id=?");
+      params.add(query.getAssessmentId());
+    }
+    if (query.getStatus() != null) {
+      sql.append(" and q.status=?");
+      params.add(query.getStatus());
+    }
+    if (query.getDimensionId() != null) {
+      sql.append(" and qd.dimension_id=?");
+      params.add(query.getDimensionId());
+    }
+    sql.append(" order by q.id asc");
+
+    try (Connection conn = Db.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+      for (int i = 0; i < params.size(); i++) {
+        Object p = params.get(i);
+        if (p instanceof Integer) {
+          ps.setInt(i + 1, (Integer) p);
+        } else {
+          ps.setObject(i + 1, p);
+        }
+      }
+
+      try (ResultSet rs = ps.executeQuery()) {
+        List<Question> list = new ArrayList<>();
+        while (rs.next()) {
+          Question q = new Question();
+          q.setId(rs.getInt("id"));
+          q.setType(rs.getInt("type"));
+          q.setTitle(rs.getString("title"));
+          q.setHint(rs.getString("hint"));
+          q.setStatus(rs.getInt("status"));
+          q.setAssessmentId(rs.getInt("assessment_id"));
+          list.add(q);
+        }
+
+        if (list.isEmpty()) {
+          return list;
+        }
+
+        Map<Integer, Question> byId = new HashMap<>();
+        for (Question q : list) {
+          byId.put(q.getId(), q);
+        }
+        fillDimensions(byId);
+        fillChoices(byId);
+        return list;
+      }
+    }
+  }
+
   private List<Question> listByAssessment(int assessmentId) throws SQLException {
-    String sql = "select id, type, title, assessment_id from questions where assessment_id=? and status=2 order by id asc";
+    String sql = "select id, type, title, hint, status, assessment_id from questions where assessment_id=? and status=2 order by id asc";
     try (Connection conn = Db.getConnection();
          PreparedStatement ps = conn.prepareStatement(sql)) {
       ps.setInt(1, assessmentId);
@@ -256,6 +369,8 @@ public class QuestionDao {
           q.setId(rs.getInt("id"));
           q.setType(rs.getInt("type"));
           q.setTitle(rs.getString("title"));
+          q.setHint(rs.getString("hint"));
+          q.setStatus(rs.getInt("status"));
           q.setAssessmentId(rs.getInt("assessment_id"));
           list.add(q);
         }

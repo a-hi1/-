@@ -50,21 +50,21 @@
   </form>
 </div>
 
-<div class="card">
+<div class="card" style="padding:0; overflow:hidden; box-shadow:0 2px 10px rgba(0,0,0,0.05); border:1px solid #e1e4e8;">
   <table class="table">
     <tr>
-      <th style="width:70px">ID</th>
-      <th style="width:180px">登录名</th>
-      <th style="width:220px">真实姓名</th>
-      <th style="width:120px">用户类型</th>
-      <th style="width:100px">用户状态</th>
-      <th>最后登录</th>
-      <th style="width:120px">操作</th>
+      <th style="width:60px; text-align:center;">ID</th>
+      <th style="width:150px">登录名</th>
+      <th style="width:150px">真实姓名</th>
+      <th style="width:130px">用户类型</th>
+      <th style="width:100px; text-align:center;">用户状态</th>
+      <th style="width:180px">最后登录</th>
+      <th style="min-width:260px; text-align:right; padding-right:24px; white-space:nowrap;">操作</th>
     </tr>
     <c:forEach items="${users}" var="u">
       <tr>
-        <td>${u.id}</td>
-        <td><c:out value="${u.login}"/></td>
+        <td style="text-align:center; color:#666;">${u.id}</td>
+        <td style="font-weight:500;"><c:out value="${u.login}"/></td>
         <td><c:out value="${u.name}"/></td>
         <td>
           <c:choose>
@@ -75,26 +75,26 @@
             <c:otherwise>${u.type}</c:otherwise>
           </c:choose>
         </td>
-        <td>
+        <td style="text-align:center;">
           <c:choose>
             <c:when test="${u.status == 1}"><span class="tag tag-green">启用</span></c:when>
             <c:otherwise><span class="tag tag-gray">禁用</span></c:otherwise>
           </c:choose>
         </td>
-        <td>${u.lastLogin}</td>
-        <td>
-          <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <a class="btn btn-light" href="${pageContext.request.contextPath}/admin/users?id=${u.id}">查看</a>
-            <a class="btn" href="${pageContext.request.contextPath}/admin/users?editId=${u.id}">编辑</a>
-            <form method="post" action="${pageContext.request.contextPath}/admin/users" style="display:inline">
+        <td style="color:#777; font-size:13px;">${u.lastLogin}</td>
+        <td style="text-align:right; padding-right:24px; white-space:nowrap;">
+          <div style="display:flex; justify-content:flex-end; align-items:center; gap:8px;">
+            <a class="btn btn-light btn-sm" href="${pageContext.request.contextPath}/admin/users?id=${u.id}" style="padding:5px 12px; margin:0;">查看</a>
+            <a class="btn btn-view btn-sm" href="${pageContext.request.contextPath}/admin/users?editId=${u.id}" style="padding:5px 12px; margin:0;">编辑</a>
+            <form method="post" action="${pageContext.request.contextPath}/admin/users" style="margin:0;">
               <input type="hidden" name="action" value="resetPwd" />
               <input type="hidden" name="id" value="${u.id}" />
-              <button type="submit" class="btn btn-warn" onclick="return confirm('确认重置密码为 123456？')">重置密码</button>
+              <button type="submit" class="btn btn-light btn-sm" style="padding:5px 12px; margin:0; white-space:nowrap;" onclick="return confirm('确认重置密码为 123456？')">重置</button>
             </form>
-            <form method="post" action="${pageContext.request.contextPath}/admin/users" style="display:inline">
+            <form method="post" action="${pageContext.request.contextPath}/admin/users" style="margin:0;">
               <input type="hidden" name="action" value="delete" />
               <input type="hidden" name="id" value="${u.id}" />
-              <button type="submit" class="btn" onclick="return confirm('确认删除该用户？')">删除</button>
+              <button type="submit" class="btn btn-danger btn-sm" style="padding:5px 12px; margin:0; white-space:nowrap;" onclick="return confirm('确认删除该用户？')">删除</button>
             </form>
           </div>
         </td>

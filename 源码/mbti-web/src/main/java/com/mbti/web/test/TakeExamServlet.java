@@ -20,6 +20,7 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -28,6 +29,7 @@ import java.util.HashSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 
 @WebServlet(name = "takeExamServlet", urlPatterns = "/test/take")
@@ -158,9 +160,6 @@ public class TakeExamServlet extends HttpServlet {
         resolvedQuestions.add(q);
       }
 
-      // 均衡出题：避免某个维度题数为0导致结果出现“?”
-      resolvedQuestions = balanceQuestionsByDimension(dims, resolvedQuestions, schedule.getQuestionNumber());
-
       // 防重复：同一人员同一场次，优先复用未完成记录；若已完成则直接查看结果。
       int examId;
       ExamDao.ExamMeta latest = examDao.findLatestByPersonnelAndSchedule(u.getId(), scheduleId);
@@ -174,6 +173,9 @@ public class TakeExamServlet extends HttpServlet {
       } else {
         examId = examDao.createExam(u.getId(), scheduleId);
       }
+
+      // 随机出题并保存到 Session，保证本次测评前后请求使用同一套题。
+      resolvedQuestions = resolveExamQuestions(req, examId, dims, resolvedQuestions, schedule.getQuestionNumber(), false);
 
       req.setAttribute("schedule", schedule);
       req.setAttribute("questions", resolvedQuestions);
@@ -252,6 +254,7 @@ public class TakeExamServlet extends HttpServlet {
 
       // 用户选择“不保存退出”：丢弃未完成记录，避免后台统计出现“进行中”残留。
       if ("discard".equalsIgnoreCase(action)) {
+        clearExamQuestions(req.getSession(), examId);
         examDao.discardExam(examId, u.getId());
         resp.sendRedirect(req.getContextPath() + "/test/schedules");
         return;
@@ -259,6 +262,12 @@ public class TakeExamServlet extends HttpServlet {
 
       if (schedule.getAssessmentId() <= 0) {
         resp.sendError(409, "schedule has no assessment");
+        return;
+      }
+
+      // 交卷必须使用 Session 中固化的题目集合，防止通过构造参数篡改题目范围。
+      if (req.getSession().getAttribute(examQuestionKey(examId)) == null) {
+        resp.sendRedirect(req.getContextPath() + "/test/take?scheduleId=" + scheduleId);
         return;
       }
 
@@ -306,7 +315,7 @@ public class TakeExamServlet extends HttpServlet {
         }
       }
 
-      questions = balanceQuestionsByDimension(dims, questions, schedule.getQuestionNumber());
+      questions = resolveExamQuestions(req, examId, dims, questions, schedule.getQuestionNumber(), false);
 
       Map<Integer, Integer> answers = new HashMap<>();
       Map<Integer, Integer> questionChecked = new HashMap<>();
@@ -353,6 +362,7 @@ public class TakeExamServlet extends HttpServlet {
       }
 
       examDao.saveAnswersAndResult(examId, u.getId(), answers, questionChecked, result.toString());
+      clearExamQuestions(req.getSession(), examId);
 
       resp.sendRedirect(req.getContextPath() + "/test/result?examId=" + examId);
     } catch (Exception e) {
@@ -360,20 +370,132 @@ public class TakeExamServlet extends HttpServlet {
     }
   }
 
-  private static List<Question> balanceQuestionsByDimension(List<Dimension> dims, List<Question> questions, int targetCount) {
-    if (targetCount <= 0 || questions.size() <= targetCount) {
-      return questions;
+  private List<Question> resolveExamQuestions(HttpServletRequest req, int examId, List<Dimension> dims,
+                                              List<Question> sourceQuestions, int targetCount,
+                                              boolean allowUseSubmittedIds) {
+    HttpSession session = req.getSession();
+    Map<Integer, Question> byId = new HashMap<>();
+    for (Question q : sourceQuestions) {
+      byId.put(q.getId(), q);
     }
-    // 仅按“当前测评的4个维度”均衡抽题；顺序稳定，保证 GET/POST 一致
+
+    Object saved = session.getAttribute(examQuestionKey(examId));
+    if (saved instanceof List) {
+      @SuppressWarnings("unchecked")
+      List<Integer> ids = (List<Integer>) saved;
+      List<Question> restored = restoreQuestionList(ids, byId);
+      if (!restored.isEmpty()) {
+        return restored;
+      }
+    }
+
+    if (allowUseSubmittedIds) {
+      List<Integer> submittedIds = extractSubmittedQuestionIds(req);
+      List<Question> restoredBySubmit = restoreQuestionList(submittedIds, byId);
+      if (!restoredBySubmit.isEmpty()) {
+        session.setAttribute(examQuestionKey(examId), toIdList(restoredBySubmit));
+        return restoredBySubmit;
+      }
+    }
+
+    List<Question> generated = randomBalanceQuestionsByDimension(dims, sourceQuestions, targetCount);
+    session.setAttribute(examQuestionKey(examId), toIdList(generated));
+    return generated;
+  }
+
+  private String examQuestionKey(int examId) {
+    return "test.exam.questions." + examId;
+  }
+
+  private void clearExamQuestions(HttpSession session, int examId) {
+    session.removeAttribute(examQuestionKey(examId));
+  }
+
+  private List<Integer> toIdList(List<Question> questions) {
+    List<Integer> ids = new ArrayList<>(questions.size());
+    for (Question q : questions) {
+      ids.add(q.getId());
+    }
+    return ids;
+  }
+
+  private List<Question> restoreQuestionList(List<Integer> ids, Map<Integer, Question> byId) {
+    if (ids == null || ids.isEmpty()) {
+      return Collections.emptyList();
+    }
+    List<Question> out = new ArrayList<>(ids.size());
+    for (Integer id : ids) {
+      if (id == null) {
+        continue;
+      }
+      Question q = byId.get(id);
+      if (q != null) {
+        out.add(q);
+      }
+    }
+    return out;
+  }
+
+  private List<Integer> extractSubmittedQuestionIds(HttpServletRequest req) {
+    List<Integer> ids = new ArrayList<>();
+
+    String idCsv = req.getParameter("questionIds");
+    if (idCsv != null && !idCsv.trim().isEmpty()) {
+      String[] parts = idCsv.split(",");
+      for (String part : parts) {
+        String token = part == null ? "" : part.trim();
+        if (token.isEmpty()) {
+          continue;
+        }
+        try {
+          ids.add(Integer.parseInt(token));
+        } catch (NumberFormatException ignore) {
+          // Ignore malformed items from untrusted request payload.
+        }
+      }
+      if (!ids.isEmpty()) {
+        return ids;
+      }
+    }
+
+    for (String name : req.getParameterMap().keySet()) {
+      if (name == null || !name.startsWith("q_")) {
+        continue;
+      }
+      try {
+        ids.add(Integer.parseInt(name.substring(2)));
+      } catch (NumberFormatException ignore) {
+        // Ignore malformed question parameter names.
+      }
+    }
+    return ids;
+  }
+
+  private static List<Question> randomBalanceQuestionsByDimension(List<Dimension> dims, List<Question> questions, int targetCount) {
+    List<Question> source = new ArrayList<>(questions);
+    if (source.isEmpty()) {
+      return source;
+    }
+
+    Random random = new Random();
+    if (targetCount <= 0 || source.size() <= targetCount) {
+      Collections.shuffle(source, random);
+      return source;
+    }
+
+    // 按维度均衡随机抽题，再随机打散显示顺序。
     Map<Integer, List<Question>> byDim = new HashMap<>();
     for (Dimension d : dims) {
       byDim.put(d.getId(), new ArrayList<>());
     }
-    for (Question q : questions) {
+    for (Question q : source) {
       List<Question> bucket = byDim.get(q.getDimensionId());
       if (bucket != null) {
         bucket.add(q);
       }
+    }
+    for (List<Question> bucket : byDim.values()) {
+      Collections.shuffle(bucket, random);
     }
 
     int dimCount = dims.size();
@@ -393,23 +515,31 @@ public class TakeExamServlet extends HttpServlet {
     }
 
     if (out.size() >= targetCount) {
-      return out.subList(0, targetCount);
+      List<Question> picked = new ArrayList<>(out.subList(0, targetCount));
+      Collections.shuffle(picked, random);
+      return picked;
     }
 
-    // 补齐：从剩余题目中按原顺序补到目标数
+    // 补齐：从剩余题目中随机补到目标数
     Set<Integer> picked = new HashSet<>();
     for (Question q : out) {
       picked.add(q.getId());
     }
-    for (Question q : questions) {
+    List<Question> remaining = new ArrayList<>();
+    for (Question q : source) {
+      if (!picked.contains(q.getId())) {
+        remaining.add(q);
+      }
+    }
+    Collections.shuffle(remaining, random);
+    for (Question q : remaining) {
       if (out.size() >= targetCount) {
         break;
       }
-      if (!picked.contains(q.getId())) {
-        out.add(q);
-        picked.add(q.getId());
-      }
+      out.add(q);
+      picked.add(q.getId());
     }
+    Collections.shuffle(out, random);
     return out;
   }
 }

@@ -6,6 +6,7 @@ import com.mbti.web.dao.QuestionDao;
 import com.mbti.web.model.Assessment;
 import com.mbti.web.model.Dimension;
 import com.mbti.web.model.Question;
+import com.mbti.web.model.QuestionQuery;
 import com.mbti.web.model.User;
 import com.mbti.web.util.Web;
 
@@ -28,11 +29,30 @@ public class AdminQuestionsServlet extends HttpServlet {
   @Override
   protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
     String assessmentIdStr = req.getParameter("assessmentId");
+    String statusStr = val(req.getParameter("status"));
+    String dimensionIdStr = val(req.getParameter("dimensionId"));
+    String viewStr = val(req.getParameter("view"));
     try {
       List<Assessment> assessments = assessmentDao.listAll();
       req.setAttribute("assessments", assessments);
 
       String qidStr = val(req.getParameter("id"));
+      if ("1".equals(viewStr) && !qidStr.isEmpty()) {
+        Question question = questionDao.findById(Integer.parseInt(qidStr));
+        if (question == null) {
+          resp.sendRedirect(req.getContextPath() + "/admin/questions");
+          return;
+        }
+        Dimension d = question.getDimensionId() > 0 ? dimensionDao.findById(question.getDimensionId()) : null;
+        req.setAttribute("q", question);
+        req.setAttribute("dimension", d);
+        req.setAttribute("assessmentId", question.getAssessmentId());
+        req.setAttribute("status", statusStr.isEmpty() ? 2 : Integer.parseInt(statusStr));
+        req.setAttribute("dimensionId", dimensionIdStr.isEmpty() ? null : Integer.parseInt(dimensionIdStr));
+        req.getRequestDispatcher("/WEB-INF/jsp/admin/question_view.jsp").forward(req, resp);
+        return;
+      }
+
       if (!qidStr.isEmpty()) {
         Question edit = questionDao.findByIdWithChoices(Integer.parseInt(qidStr));
         req.setAttribute("edit", edit);
@@ -60,9 +80,20 @@ public class AdminQuestionsServlet extends HttpServlet {
       }
 
       if (assessmentId != null) {
-        List<Question> questions = questionDao.listByAssessmentWithChoices(assessmentId);
-        Map<Integer, String> dimTitleById = new HashMap<>();
         List<Dimension> dims = dimensionDao.listByAssessment(assessmentId);
+        Integer selectedDimensionId = null;
+        if (!dimensionIdStr.isEmpty()) {
+          selectedDimensionId = Integer.parseInt(dimensionIdStr);
+        }
+        Integer selectedStatus = statusStr.isEmpty() ? 2 : Integer.parseInt(statusStr);
+
+        QuestionQuery query = new QuestionQuery();
+        query.setAssessmentId(assessmentId);
+        query.setStatus(selectedStatus);
+        query.setDimensionId(selectedDimensionId);
+
+        List<Question> questions = questionDao.findByCondition(query);
+        Map<Integer, String> dimTitleById = new HashMap<>();
         for (Dimension d : dims) {
           dimTitleById.put(d.getId(), d.getTitle());
         }
@@ -81,6 +112,8 @@ public class AdminQuestionsServlet extends HttpServlet {
         req.setAttribute("questions", questions);
         req.setAttribute("dimTitleById", dimTitleById);
         req.setAttribute("dimensions", dims);
+        req.setAttribute("status", selectedStatus);
+        req.setAttribute("dimensionId", selectedDimensionId);
       }
       req.getRequestDispatcher("/WEB-INF/jsp/admin/questions.jsp").forward(req, resp);
     } catch (Exception e) {
@@ -93,28 +126,142 @@ public class AdminQuestionsServlet extends HttpServlet {
     req.setCharacterEncoding("UTF-8");
     String action = val(req.getParameter("action"));
     String assessmentIdStr = val(req.getParameter("assessmentId"));
+    String statusStr = val(req.getParameter("status"));
+    String dimensionIdStr = val(req.getParameter("dimensionId"));
+    String viewStr = val(req.getParameter("view"));
     try {
       if ("save".equals(action) || "create".equals(action)) {
+        if (assessmentIdStr.isEmpty()) {
+          req.setAttribute("error", "请选择考核类型");
+          doGet(req, resp);
+          return;
+        }
+        Integer assessmentIdObj = parseInt(assessmentIdStr);
+        if (assessmentIdObj == null) {
+          req.setAttribute("error", "考核类型参数不合法");
+          doGet(req, resp);
+          return;
+        }
+        int assessmentId = assessmentIdObj;
+        Assessment assessment = assessmentDao.findById(assessmentId);
+        if (assessment == null) {
+          req.setAttribute("error", "考核类型不存在");
+          doGet(req, resp);
+          return;
+        }
+
         User u = (User) req.getSession().getAttribute(Web.SESSION_USER);
-        int assessmentId = Integer.parseInt(assessmentIdStr);
+        if (u == null) {
+          resp.sendRedirect(req.getContextPath() + "/login");
+          return;
+        }
+
         String idStr = val(req.getParameter("id"));
-        int dimensionId = Integer.parseInt(val(req.getParameter("dimensionId")));
+        Integer dimensionIdObj = parseInt(val(req.getParameter("dimensionId")));
+        if (dimensionIdObj == null) {
+          req.setAttribute("error", "请选择性格维度");
+          doGet(req, resp);
+          return;
+        }
+        int dimensionId = dimensionIdObj;
+        Dimension dim = dimensionDao.findById(dimensionId);
+        if (dim == null || dim.getAssessmentId() != assessmentId) {
+          req.setAttribute("error", "所选性格维度不属于当前考核类型");
+          doGet(req, resp);
+          return;
+        }
+
+        Integer qid = null;
+        if (!idStr.isEmpty()) {
+          qid = parseInt(idStr);
+          if (qid == null) {
+            req.setAttribute("error", "题目ID参数不合法");
+            doGet(req, resp);
+            return;
+          }
+          Question current = questionDao.findById(qid);
+          if (current == null) {
+            req.setAttribute("error", "要修改的题目不存在");
+            doGet(req, resp);
+            return;
+          }
+          if (current.getAssessmentId() != assessmentId) {
+            req.setAttribute("error", "题目不属于当前考核类型，不能跨类型修改");
+            doGet(req, resp);
+            return;
+          }
+        }
+
         String title = val(req.getParameter("title"));
         String a = val(req.getParameter("choiceA"));
         String b = val(req.getParameter("choiceB"));
-        int correct = Integer.parseInt(val(req.getParameter("correct")));
+        if (title.isEmpty() || a.isEmpty() || b.isEmpty()) {
+          req.setAttribute("error", "题目和选项不能为空");
+          doGet(req, resp);
+          return;
+        }
+        if (a.equals(b)) {
+          req.setAttribute("error", "选项A和选项B不能相同");
+          doGet(req, resp);
+          return;
+        }
 
-        if (idStr.isEmpty()) {
+        Integer correctObj = parseInt(val(req.getParameter("correct")));
+        if (correctObj == null) {
+          req.setAttribute("error", "正确项参数不合法");
+          doGet(req, resp);
+          return;
+        }
+        int correct = correctObj;
+        if (correct != 1 && correct != 2) {
+          req.setAttribute("error", "正确项参数不合法");
+          doGet(req, resp);
+          return;
+        }
+
+        if (qid == null) {
           questionDao.createTwoChoiceQuestion(assessmentId, dimensionId, 1, 1, 2, u.getId(), title, a, b, correct);
         } else {
-          questionDao.updateTwoChoiceQuestion(Integer.parseInt(idStr), assessmentId, dimensionId, title, a, b, correct);
+          questionDao.updateTwoChoiceQuestion(qid, assessmentId, dimensionId, title, a, b, correct);
         }
       } else if ("delete".equals(action)) {
-        int qid = Integer.parseInt(req.getParameter("id"));
+        Integer qid = parseInt(req.getParameter("id"));
+        if (qid == null) {
+          req.setAttribute("error", "题目ID参数不合法");
+          doGet(req, resp);
+          return;
+        }
+
+        Question current = questionDao.findById(qid);
+        if (current == null) {
+          req.setAttribute("error", "要删除的题目不存在");
+          doGet(req, resp);
+          return;
+        }
+
+        int usage = questionDao.countUsage(qid);
+        if (usage > 0) {
+          req.setAttribute("error", "该题目已被使用，不能删除");
+          doGet(req, resp);
+          return;
+        }
+
         questionDao.deleteQuestion(qid);
       }
 
-      resp.sendRedirect(req.getContextPath() + "/admin/questions?assessmentId=" + assessmentIdStr);
+      StringBuilder redirect = new StringBuilder(req.getContextPath())
+        .append("/admin/questions?assessmentId=")
+        .append(assessmentIdStr);
+      if (!statusStr.isEmpty()) {
+        redirect.append("&status=").append(statusStr);
+      }
+      if (!dimensionIdStr.isEmpty()) {
+        redirect.append("&dimensionId=").append(dimensionIdStr);
+      }
+      if (!viewStr.isEmpty()) {
+        redirect.append("&view=").append(viewStr);
+      }
+      resp.sendRedirect(redirect.toString());
     } catch (Exception e) {
       throw new ServletException(e);
     }
@@ -122,5 +269,13 @@ public class AdminQuestionsServlet extends HttpServlet {
 
   private String val(String s) {
     return s == null ? "" : s.trim();
+  }
+
+  private Integer parseInt(String s) {
+    try {
+      return Integer.parseInt(val(s));
+    } catch (Exception e) {
+      return null;
+    }
   }
 }

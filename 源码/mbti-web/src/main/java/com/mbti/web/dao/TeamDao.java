@@ -118,4 +118,18 @@ public class TeamDao {
       ps.executeUpdate();
     }
   }
+
+  public int countPersonnelRefs(int teamId) throws SQLException {
+    String sql = "select count(1) from testpersonnel where team_id=?";
+    try (Connection conn = Db.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+      ps.setInt(1, teamId);
+      try (ResultSet rs = ps.executeQuery()) {
+        if (!rs.next()) {
+          return 0;
+        }
+        return rs.getInt(1);
+      }
+    }
+  }
 }

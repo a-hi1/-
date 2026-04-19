@@ -45,34 +45,36 @@
 <div class="card">
 <table class="table">
   <tr>
-    <th>ID</th>
+    <th style="width:60px; text-align:center;">ID</th>
     <th>标题</th>
     <th>费用</th>
-    <th>状态</th>
-    <th style="width:220px">题库</th>
-    <th style="width:220px">操作</th>
+    <th style="width:80px; text-align:center;">状态</th>
+    <th style="width:160px; text-align:center;">题库</th>
+    <th style="min-width:160px; text-align:right; padding-right:24px; white-space:nowrap;">操作</th>
   </tr>
   <c:forEach items="${assessments}" var="a">
     <tr>
-      <td>${a.id}</td>
-      <td>${a.title}</td>
-      <td>${a.cost}</td>
-      <td>
+      <td style="text-align:center; color:#666;">${a.id}</td>
+      <td style="font-weight:500;">${a.title}</td>
+      <td style="color:#555;">${a.cost}</td>
+      <td style="text-align:center;">
         <c:choose>
           <c:when test="${a.status == 1}"><span class="tag tag-green">启用</span></c:when>
           <c:otherwise><span class="tag tag-gray">停用</span></c:otherwise>
         </c:choose>
       </td>
-      <td>
-        <a class="btn btn-light" href="<c:url value='/admin/questions' />?assessmentId=${a.id}">查看题目</a>
+      <td style="text-align:center;">
+        <a class="btn btn-light btn-sm" href="<c:url value='/admin/questions' />?assessmentId=${a.id}" style="padding:5px 12px; margin:0;">管理题库</a>
       </td>
-      <td>
-        <a class="btn btn-light" href="${pageContext.request.contextPath}/admin/assessments?id=${a.id}">编辑</a>
-        <form method="post" action="${pageContext.request.contextPath}/admin/assessments" style="display:inline-block;margin-left:8px">
-          <input type="hidden" name="action" value="delete" />
-          <input type="hidden" name="id" value="${a.id}" />
-          <button type="submit" class="btn btn-warn" onclick="return confirm('确认删除该测评？')">删除</button>
-        </form>
+      <td style="text-align:right; padding-right:24px; white-space:nowrap;">
+        <div style="display:flex; justify-content:flex-end; align-items:center; gap:8px;">
+          <a class="btn btn-view btn-sm" href="${pageContext.request.contextPath}/admin/assessments?id=${a.id}" style="padding:5px 12px; margin:0;">编辑</a>
+          <form method="post" action="${pageContext.request.contextPath}/admin/assessments" style="margin:0;">
+            <input type="hidden" name="action" value="delete" />
+            <input type="hidden" name="id" value="${a.id}" />
+            <button type="submit" class="btn btn-danger btn-sm" style="padding:5px 12px; margin:0; white-space:nowrap;" onclick="return confirm('确认删除该测评？')">删除</button>
+          </form>
+        </div>
       </td>
     </tr>
   </c:forEach>

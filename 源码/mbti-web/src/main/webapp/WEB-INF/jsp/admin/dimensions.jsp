@@ -17,6 +17,9 @@
 </div>
 
 <div class="card" style="margin-bottom:14px">
+  <c:if test="${not empty error}">
+    <div style="color:red; margin-bottom:10px; width:100%;"><c:out value="${error}"/></div>
+  </c:if>
   <form method="post" action="${pageContext.request.contextPath}/admin/dimensions" class="grid" style="align-items:end">
     <input type="hidden" name="action" value="save" />
     <input type="hidden" name="assessmentId" value="${assessmentId}" />
@@ -46,24 +49,26 @@
 <div class="card">
   <table class="table">
     <tr>
-      <th style="width:70px">ID</th>
+      <th style="width:70px; text-align:center;">ID</th>
       <th style="width:220px">维度</th>
       <th>描述</th>
-      <th style="width:220px">操作</th>
+      <th style="min-width:160px; text-align:right; padding-right:24px; white-space:nowrap;">操作</th>
     </tr>
     <c:forEach items="${dimensions}" var="d">
       <tr>
-        <td>${d.id}</td>
-        <td><c:out value="${d.title}"/></td>
-        <td><c:out value="${d.depict}"/></td>
-        <td>
-          <a class="btn btn-light" href="${pageContext.request.contextPath}/admin/dimensions?assessmentId=${assessmentId}&id=${d.id}">编辑</a>
-          <form method="post" action="${pageContext.request.contextPath}/admin/dimensions" style="display:inline-block;margin-left:8px">
-            <input type="hidden" name="assessmentId" value="${assessmentId}" />
-            <input type="hidden" name="action" value="delete" />
-            <input type="hidden" name="id" value="${d.id}" />
-            <button type="submit" class="btn btn-warn" onclick="return confirm('确认删除该维度？')">删除</button>
-          </form>
+        <td style="text-align:center; color:#666;">${d.id}</td>
+        <td style="font-weight:500;"><c:out value="${d.title}"/></td>
+        <td style="color:#555;"><c:out value="${d.depict}"/></td>
+        <td style="text-align:right; padding-right:24px; white-space:nowrap;">
+          <div style="display:flex; justify-content:flex-end; align-items:center; gap:8px;">
+            <a class="btn btn-view btn-sm" href="${pageContext.request.contextPath}/admin/dimensions?assessmentId=${assessmentId}&id=${d.id}" style="padding:5px 12px; margin:0;">编辑</a>
+            <form method="post" action="${pageContext.request.contextPath}/admin/dimensions" style="margin:0;">
+              <input type="hidden" name="assessmentId" value="${assessmentId}" />
+              <input type="hidden" name="action" value="delete" />
+              <input type="hidden" name="id" value="${d.id}" />
+              <button type="submit" class="btn btn-danger btn-sm" style="padding:5px 12px; margin:0; white-space:nowrap;" onclick="return confirm('确认删除该维度？')">删除</button>
+            </form>
+          </div>
         </td>
       </tr>
     </c:forEach>

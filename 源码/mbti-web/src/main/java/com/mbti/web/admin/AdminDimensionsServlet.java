@@ -32,15 +32,20 @@ public class AdminDimensionsServlet extends HttpServlet {
         assessmentId = assessments.get(0).getId();
       }
 
+      String idStr = req.getParameter("id");
+      if (idStr != null && !idStr.trim().isEmpty()) {
+        Dimension edit = dimensionDao.findById(Integer.parseInt(idStr));
+        if (edit != null) {
+          // 编辑时以记录所属的考核类型为准，确保“关联考核类型”一致。
+          assessmentId = edit.getAssessmentId();
+          req.setAttribute("edit", edit);
+        }
+      }
+
       if (assessmentId != null) {
         List<Dimension> dims = dimensionDao.listByAssessment(assessmentId);
         req.setAttribute("assessmentId", assessmentId);
         req.setAttribute("dimensions", dims);
-      }
-
-      String idStr = req.getParameter("id");
-      if (idStr != null && !idStr.trim().isEmpty()) {
-        req.setAttribute("edit", dimensionDao.findById(Integer.parseInt(idStr)));
       }
 
       req.getRequestDispatcher("/WEB-INF/jsp/admin/dimensions.jsp").forward(req, resp);
@@ -56,17 +61,61 @@ public class AdminDimensionsServlet extends HttpServlet {
     String assessmentIdStr = val(req.getParameter("assessmentId"));
     try {
       if ("save".equals(action)) {
+        if (assessmentIdStr.isEmpty()) {
+          req.setAttribute("error", "请先选择考核类型");
+          doGet(req, resp);
+          return;
+        }
         int assessmentId = Integer.parseInt(assessmentIdStr);
         String idStr = val(req.getParameter("id"));
         String title = val(req.getParameter("title"));
         String depict = val(req.getParameter("depict"));
-        if (idStr.isEmpty()) {
+        if (title.isEmpty()) {
+          req.setAttribute("error", "维度名称不能为空");
+          doGet(req, resp);
+          return;
+        }
+
+        Integer currentId = idStr.isEmpty() ? null : Integer.parseInt(idStr);
+        if (currentId != null) {
+          Dimension current = dimensionDao.findById(currentId);
+          if (current == null) {
+            req.setAttribute("error", "要修改的维度不存在");
+            doGet(req, resp);
+            return;
+          }
+        }
+
+        // 校验性格维度是否存在（对应任务难点）
+        Integer existingId = dimensionDao.findIdByAssessmentAndTitle(assessmentId, title);
+        if (existingId != null && (currentId == null || existingId.intValue() != currentId.intValue())) {
+          req.setAttribute("error", "该性格维度已存在，不可重复添加！");
+          doGet(req, resp);
+          return;
+        }
+
+        if (currentId == null) {
           dimensionDao.create(assessmentId, title, depict);
         } else {
-          dimensionDao.update(Integer.parseInt(idStr), title, depict);
+          dimensionDao.update(currentId, assessmentId, title, depict);
         }
       } else if ("delete".equals(action)) {
         int id = Integer.parseInt(req.getParameter("id"));
+
+        Dimension current = dimensionDao.findById(id);
+        if (current == null) {
+          req.setAttribute("error", "要删除的维度不存在");
+          doGet(req, resp);
+          return;
+        }
+
+        int refCount = dimensionDao.countQuestionRefs(id);
+        if (refCount > 0) {
+          req.setAttribute("error", "该维度已被题目引用，不能删除");
+          doGet(req, resp);
+          return;
+        }
+
         dimensionDao.delete(id);
       }
 
