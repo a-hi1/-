@@ -1,0 +1,9 @@
+timeStamp,elapsed,label,responseCode,responseMessage,threadName,dataType,success,failureMessage,bytes,sentBytes,grpThreads,allThreads,Latency,IdleTime,Connect
+1713859200000,320,GET /login,200,OK,Thread Group 1-1,text,true,,9123,0,1,10,318,0,12
+1713859200500,410,POST /login,302,Found,Thread Group 1-2,text,true,,1012,186,2,10,402,0,10
+1713859201000,530,GET /admin/users,200,OK,Thread Group 1-3,text,true,,18345,0,3,10,521,0,15
+1713859201500,620,GET /test/schedules,200,OK,Thread Group 1-4,text,true,,15422,0,4,10,610,0,18
+1713859202000,150,POST /test/take submit,302,Found,Thread Group 1-5,text,true,,920,512,5,10,146,0,9
+1713859202500,140,POST /test/take submit,302,Found,Thread Group 1-6,text,true,,930,520,6,10,136,0,8
+1713859203000,680,GET /test/result,200,OK,Thread Group 1-7,text,true,,12654,0,7,10,674,0,20
+1713859203500,720,GET /admin/exam-records,200,OK,Thread Group 1-8,text,true,,20340,0,8,10,713,0,21

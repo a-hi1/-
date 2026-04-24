@@ -1,0 +1,79 @@
+{
+  "info": {
+    "name": "MBTI API Collection",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "课程测试证据：登录、权限、测评核心接口集合"
+  },
+  "item": [
+    {
+      "name": "Login - Admin",
+      "request": {
+        "method": "POST",
+        "header": [
+          {"key": "Content-Type", "value": "application/x-www-form-urlencoded"}
+        ],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            {"key": "login", "value": "admin", "type": "text"},
+            {"key": "passwd", "value": "123456", "type": "text"}
+          ]
+        },
+        "url": "{{baseUrl}}/login"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('status is 200 or 302', function () {",
+              "  pm.expect([200,302]).to.include(pm.response.code);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin Users - List",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/admin/users"
+      }
+    },
+    {
+      "name": "Test Schedules - List",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/test/schedules"
+      }
+    },
+    {
+      "name": "Take Exam - Unauthorized Check",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/test/take?scheduleId=1"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('status is 302/403/400 (protected endpoint)', function () {",
+              "  pm.expect([302,403,400]).to.include(pm.response.code);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://127.0.0.1:8080/mbti-web"
+    }
+  ]
+}
