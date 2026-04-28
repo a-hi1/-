@@ -54,7 +54,7 @@
     }
 
     /* 卡片左侧插画区 */
-    .card-left { flex: 1; background: #fff; position: relative; display: flex; align-items: center; justify-content: center; min-height: 520px; }
+    .card-left { display: none; }
     .card-left .logo-top { position: absolute; top: 30px; left: 0; width: 100%; display: flex; justify-content: center; padding-right: 90px; }
     .illustration { width: 85%; max-width: 340px; position: relative; z-index: 2; margin-bottom:20px; animation: float 4s ease-in-out infinite; }
     .badge { position: absolute; bottom: 45px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, #eda526, #f59e0b); color: #fff; padding: 8px 24px; border-radius: 999px; font-weight: bold; font-size: 14px; letter-spacing: 1px; z-index: 3; box-shadow: 0 6px 20px rgba(237, 165, 38, 0.5); white-space: nowrap; animation: bounce 2s ease-in-out infinite; }
@@ -65,7 +65,7 @@
     }
 
     /* 卡片右侧表单区 */
-    .card-right { flex: 1; background: linear-gradient(135deg, #f8f9fb, #fafbfc); display: flex; flex-direction: column; justify-content: flex-start; align-items: center; padding: 40px 50px; overflow-y: auto; }
+    .card-right { flex: 1; width: 100%; background: linear-gradient(135deg, #f8f9fb, #fafbfc); display: flex; flex-direction: column; justify-content: flex-start; align-items: center; padding: 40px 50px; overflow-y: auto; }
     .logo-main { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
     .logo-icon { width: 42px; height: 42px; fill: #eda526; animation: spin 20s linear infinite; }
     @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
@@ -98,6 +98,7 @@
     input:-webkit-autofill { -webkit-box-shadow: 0 0 0 30px #f8f9fb inset !important; -webkit-text-fill-color: #333 !important; }
     @media (max-width: 768px) {
       .card-left, .bg-left, .rings, .deco-dot { display: none; }
+      .card-right { padding: 30px 20px; }
       .card { width: 100%; height: 100vh; max-width: 100%; border-radius: 0; }
       .bg-right { width: 100%; }
       .card-right { background: #fff; padding: 40px 20px; justify-content: center; }

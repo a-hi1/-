@@ -9,6 +9,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -174,6 +175,103 @@ public class PersonnelDao {
           r.status = rs.getInt("status");
           if (rs.getTimestamp("last_login") != null) {
               r.lastLogin = rs.getTimestamp("last_login").toLocalDateTime();
+          }
+          r.phone = rs.getString("phone");
+          r.gender = rs.getString("gender");
+          if (rs.getDate("birthdate") != null) {
+            r.birthdate = rs.getDate("birthdate").toLocalDate();
+          }
+          r.email = rs.getString("email");
+          int tid = rs.getInt("team_id");
+          r.teamId = rs.wasNull() ? null : tid;
+          r.teamName = rs.getString("team_name");
+          list.add(r);
+        }
+        return list;
+      }
+    }
+  }
+
+  public int countFiltered(Integer teamId, String nameKeyword, String phoneKeyword) throws SQLException {
+    String base = "select count(*) as cnt from users u left join testpersonnel tp on tp.id=u.id where u.type=4";
+    StringBuilder sql = new StringBuilder(base);
+    List<Object> params = new ArrayList<>();
+
+    if (teamId != null) {
+      sql.append(" and tp.team_id=?");
+      params.add(teamId);
+    }
+    String nameKw = nameKeyword == null ? "" : nameKeyword.trim();
+    if (!nameKw.isEmpty()) {
+      sql.append(" and (u.name like ? or u.login like ?)");
+      String like = "%" + nameKw + "%";
+      params.add(like);
+      params.add(like);
+    }
+    String phoneKw = phoneKeyword == null ? "" : phoneKeyword.trim();
+    if (!phoneKw.isEmpty()) {
+      sql.append(" and tp.phone like ?");
+      params.add("%" + phoneKw + "%");
+    }
+
+    try (Connection conn = Db.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+      for (int i = 0; i < params.size(); i++) {
+        ps.setObject(i + 1, params.get(i));
+      }
+      try (ResultSet rs = ps.executeQuery()) {
+        if (rs.next()) {
+          return rs.getInt("cnt");
+        }
+        return 0;
+      }
+    }
+  }
+
+  public List<PersonnelRow> listPaged(Integer teamId, String nameKeyword, String phoneKeyword, int page, int pageSize) throws SQLException {
+    String base = "select u.id, u.login, u.name, u.status, u.last_login, tp.phone, tp.gender, tp.birthdate, tp.email, tp.team_id, t.name as team_name " +
+      "from users u left join testpersonnel tp on tp.id=u.id " +
+      "left join class_teams t on t.id=tp.team_id " +
+      "where u.type=4";
+
+    StringBuilder sql = new StringBuilder(base);
+    List<Object> params = new ArrayList<>();
+
+    if (teamId != null) {
+      sql.append(" and tp.team_id=?");
+      params.add(teamId);
+    }
+    String nameKw = nameKeyword == null ? "" : nameKeyword.trim();
+    if (!nameKw.isEmpty()) {
+      sql.append(" and (u.name like ? or u.login like ?)");
+      String like = "%" + nameKw + "%";
+      params.add(like);
+      params.add(like);
+    }
+    String phoneKw = phoneKeyword == null ? "" : phoneKeyword.trim();
+    if (!phoneKw.isEmpty()) {
+      sql.append(" and tp.phone like ?");
+      params.add("%" + phoneKw + "%");
+    }
+    sql.append(" order by u.id desc limit ? offset ?");
+    params.add(pageSize);
+    params.add(Math.max(page - 1, 0) * pageSize);
+
+    try (Connection conn = Db.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+      for (int i = 0; i < params.size(); i++) {
+        ps.setObject(i + 1, params.get(i));
+      }
+      try (ResultSet rs = ps.executeQuery()) {
+        List<PersonnelRow> list = new ArrayList<>();
+        while (rs.next()) {
+          PersonnelRow r = new PersonnelRow();
+          r.id = rs.getInt("id");
+          r.login = rs.getString("login");
+          r.name = rs.getString("name");
+          r.status = rs.getInt("status");
+          if (rs.getTimestamp("last_login") != null) {
+            r.lastLogin = rs.getTimestamp("last_login").toLocalDateTime();
           }
           r.phone = rs.getString("phone");
           r.gender = rs.getString("gender");

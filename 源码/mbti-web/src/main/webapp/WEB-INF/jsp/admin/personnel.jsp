@@ -10,6 +10,30 @@
   <c:remove var="flash" scope="session" />
 </c:if>
 
+<c:if test="${not empty sessionScope.importErrors}">
+  <div class="card" style="margin-bottom:14px; background:#fef2f2; border:1px solid #fecaca;">
+    <div style="font-size:16px; font-weight:800; color:#dc2626; margin-bottom:12px; display:flex; align-items:center; gap:8px;">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+      批量导入结果详情
+    </div>
+    <div style="background:#fff; border:1px solid #fecaca; border-radius:6px; padding:12px; margin-bottom:12px;">
+      <div style="display:flex; gap:20px; margin-bottom:12px; font-size:14px;">
+        <div><span style="color:#16a34a; font-weight:bold;">${sessionScope.importOk} 条</span> <span class="muted">成功导入</span></div>
+        <div><span style="color:#dc2626; font-weight:bold;">${sessionScope.importFail} 条</span> <span class="muted">导入失败</span></div>
+      </div>
+      <div style="max-height:300px; overflow-y:auto; background:#fafbfc; border:1px solid #e5e7eb; border-radius:4px; padding:12px; font-family:monospace; font-size:12px; line-height:1.6; color:#666;">
+        <c:forEach items="${sessionScope.importErrors}" var="err">
+          <div style="margin-bottom:6px; padding:4px 0; border-bottom:1px solid #f0f0f0;">❌ <c:out value="${err}"/></div>
+        </c:forEach>
+      </div>
+    </div>
+    <div class="muted" style="font-size:12px;">💡 提示：请根据上述错误信息调整导入数据格式后重试。常见原因：登录名重复、日期格式错误、必填字段为空。</div>
+  </div>
+  <c:remove var="importErrors" scope="session" />
+  <c:remove var="importOk" scope="session" />
+  <c:remove var="importFail" scope="session" />
+</c:if>
+
 <div class="card" style="margin-bottom:14px">
   <div style="font-size:16px; font-weight:800; color:#1e293b; margin-bottom:16px; display:flex; align-items:center; gap:8px;">
     <span style="width:4px; height:16px; background:var(--primary); border-radius:2px;"></span>
@@ -23,12 +47,12 @@
     <input type="hidden" name="action" value="${empty edit ? 'create' : 'update'}" />
     <input type="hidden" name="id" value="${edit.id}" />
     <div class="col-3">
-      <label>登录名</label>
-      <input name="login" value="${edit.login}" placeholder="手机号/学号/账号名" required />
-    </div>
-    <div class="col-3">
       <label>姓名</label>
       <input name="name" value="${edit.name}" placeholder="请输入真实姓名" required />
+    </div>
+    <div class="col-3">
+      <label>手机号 <span class="muted" style="font-weight:normal">(作为登录名)</span></label>
+      <input name="phone" value="${edit.phone}" placeholder="联系电话（作为登录账号）" required />
     </div>
     <div class="col-2">
       <label>密码</label>
@@ -53,10 +77,6 @@
     
     <div class="col-12" style="height:1px; background:var(--border); margin:4px 0;"></div>
 
-    <div class="col-3">
-      <label>手机号 <span class="muted" style="font-weight:normal">(可选)</span></label>
-      <input name="phone" value="${edit.phone}" placeholder="联系电话" />
-    </div>
     <div class="col-2">
       <label>性别</label>
       <select name="gender">
@@ -106,7 +126,7 @@
     </div>
     <div class="col-3">
       <label>姓名</label>
-      <input name="name" value="${name}" placeholder="按姓名或登录名检索" />
+      <input name="name" value="${name}" placeholder="按姓名检索" />
     </div>
     <div class="col-3">
       <label>手机号</label>
@@ -122,6 +142,20 @@
   </form>
 
   <div style="height:1px; background:var(--border); margin: 0 -24px 20px -24px;"></div>
+
+  <c:if test="${not empty personnel}">
+    <form method="post" action="${pageContext.request.contextPath}/admin/personnel" id="batch-delete-form">
+      <input type="hidden" name="action" value="batchDelete" />
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; gap:12px; flex-wrap:wrap;">
+        <div class="muted" style="font-size:13px;">当前显示 ${total} 条中的第 ${page} / ${totalPages} 页，每页 ${pageSize} 条</div>
+        <div style="display:flex; gap:10px; align-items:center;">
+          <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; color:#475569;">
+            <input type="checkbox" id="select-all-personnel" /> 全选当前页
+          </label>
+          <button class="btn btn-danger btn-sm" type="submit" onclick="return confirm('确认批量删除当前勾选的参测人员？')">批量删除</button>
+        </div>
+      </div>
+
 
   <div style="font-size:16px; font-weight:800; color:#1e293b; margin-bottom:16px; display:flex; align-items:center; gap:8px;">
     <span style="width:4px; height:16px; background:#10b981; border-radius:2px;"></span>快捷批量导入
@@ -154,7 +188,7 @@
     
     <div class="col-8" style="display:flex; flex-direction:column; height: 100%;">
       <label>文本内容 <span class="muted" style="font-weight:normal;">(多条记录请换行)</span></label>
-      <textarea name="lines" style="flex:1; width:100%; min-height: 160px; padding:12px 14px; border:1px solid #cbd5e1; border-radius:8px; font-family:monospace; line-height:1.6;" placeholder="格式要求（英文逗号或制表符分隔）：&#10;登录名, 姓名, [手机号, 性别, 生日, 邮箱, 指定批次ID]&#10;&#10;示例：&#10;user01, 张三&#10;user02, 李四, 13800000000, M, 2000-01-01, li@qq.com, 1"></textarea>
+      <textarea name="lines" style="flex:1; width:100%; min-height: 160px; padding:12px 14px; border:1px solid #cbd5e1; border-radius:8px; font-family:monospace; line-height:1.6;" placeholder="格式要求（英文逗号或制表符分隔，系统自动以手机号作为登录名）：&#10;姓名, 手机号, 性别, 生日, 邮箱, [指定批次ID]&#10;&#10;示例：&#10;张三, 13800000000, M, 2000-01-01, li@qq.com, 1&#10;李四, 13900000000, F, 2001-05-15, wang@qq.com"></textarea>
       
       <div style="display:flex;justify-content:flex-end; margin-top:16px;">
         <button class="btn" style="background:#10b981; color:#fff; border-color:#059669;" type="submit" onclick="return confirm('确认执行批量导入？规则：\n1. 已存在的登录名将更新信息\n2. 空白列将保留原值/默认值')">
@@ -169,6 +203,7 @@
 <div class="card" style="padding:0; overflow:hidden; box-shadow:0 2px 10px rgba(0,0,0,0.05); border:1px solid var(--border);">
   <table class="table">
     <tr>
+      <th style="width:42px; text-align:center;"><input type="checkbox" id="select-all-head" /></th>
       <th style="width:70px; text-align:center;">ID</th>
       <th style="width:160px">登录名</th>
       <th style="width:140px">姓名</th>
@@ -181,6 +216,7 @@
     </tr>
     <c:forEach items="${personnel}" var="p">
       <tr>
+        <td style="text-align:center;"><input type="checkbox" name="selectedIds" value="${p.id}" class="personnel-check" /></td>
         <td style="text-align:center; color:#666;">${p.id}</td>
         <td style="font-weight:500;"><c:out value="${p.login}"/></td>
         <td><c:out value="${p.name}"/></td>
@@ -219,9 +255,40 @@
     </c:forEach>
   </table>
 
+    <div style="display:flex; justify-content:flex-end; gap:8px; padding:14px 0 0; flex-wrap:wrap;">
+      <c:if test="${page > 1}">
+        <a class="btn btn-light btn-sm" href="${pageContext.request.contextPath}/admin/personnel?page=${page - 1}&teamId=${teamId}&name=${name}&phone=${phone}">上一页</a>
+      </c:if>
+      <c:if test="${page < totalPages}">
+        <a class="btn btn-light btn-sm" href="${pageContext.request.contextPath}/admin/personnel?page=${page + 1}&teamId=${teamId}&name=${name}&phone=${phone}">下一页</a>
+      </c:if>
+    </div>
+
+    </form>
+  </c:if>
+
   <c:if test="${empty personnel}">
     <div class="muted" style="padding:24px; text-align:center; background:#fafbfc;">暂无参测人员 / 搜索结果为空</div>
   </c:if>
 </div>
+
+<script>
+  (function () {
+    var head = document.getElementById('select-all-head');
+    var all = document.getElementById('select-all-personnel');
+    var checks = function () { return document.querySelectorAll('.personnel-check'); };
+    function sync(value) {
+      checks().forEach(function (item) { item.checked = value; });
+      if (head) head.checked = value;
+      if (all) all.checked = value;
+    }
+    if (head) {
+      head.addEventListener('change', function () { sync(head.checked); });
+    }
+    if (all) {
+      all.addEventListener('change', function () { sync(all.checked); });
+    }
+  })();
+</script>
 
 <%@ include file="../_layout_bottom.jspf" %>

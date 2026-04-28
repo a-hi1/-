@@ -10,7 +10,14 @@
       <div class="muted" style="line-height:1.8">${pendingMessage}</div>
     </c:when>
     <c:otherwise>
-      <h3 style="margin:0 0 6px">你的类型：${resultText}</h3>
+      <div style="display:flex; gap:20px; align-items:flex-start;">
+        <div style="flex:1;">
+          <h3 style="margin:0 0 6px">你的类型：${resultText}</h3>
+        </div>
+        <div style="flex-shrink:0; width:200px; text-align:center;">
+          <img src="${pageContext.request.contextPath}/static/img/${resultText}.jpg" alt="${resultText}" style="width:100%; max-width:200px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.1);" onerror="this.style.display='none'" />
+        </div>
+      </div>
     </c:otherwise>
   </c:choose>
 

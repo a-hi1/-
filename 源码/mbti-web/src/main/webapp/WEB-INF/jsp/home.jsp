@@ -71,7 +71,7 @@
     <div class="home-actions">
       <a class="home-link" href="<c:url value='/test/schedules'/>">开始测评</a>
       <a class="home-link" href="<c:url value='/test/history'/>">查看历史</a>
-      <a class="home-link" href="<c:url value='/help'/>">帮助说明</a>
+      <a class="home-link" href="<c:url value='/app/help'/>">帮助说明</a>
     </div>
   </div>
 

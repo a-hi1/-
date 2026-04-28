@@ -16,7 +16,6 @@ import javax.servlet.http.Part;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -28,6 +27,7 @@ public class AdminPersonnelServlet extends HttpServlet {
   private final PersonnelDao personnelDao = new PersonnelDao();
   private final UserDao userDao = new UserDao();
   private final TeamDao teamDao = new TeamDao();
+  private static final int PAGE_SIZE = 10;
 
   @Override
   protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -47,10 +47,29 @@ public class AdminPersonnelServlet extends HttpServlet {
       req.setAttribute("name", nameKeyword);
       req.setAttribute("phone", phoneKeyword);
 
+      int page = 1;
+      String pageStr = val(req.getParameter("page"));
+      if (!pageStr.isEmpty()) {
+        try {
+          page = Math.max(1, Integer.parseInt(pageStr));
+        } catch (NumberFormatException ignore) {
+          page = 1;
+        }
+      }
+      int total = personnelDao.countFiltered(teamId, nameKeyword, phoneKeyword);
+      int totalPages = Math.max(1, (int) Math.ceil(total / (double) PAGE_SIZE));
+      if (page > totalPages) {
+        page = totalPages;
+      }
+      req.setAttribute("page", page);
+      req.setAttribute("pageSize", PAGE_SIZE);
+      req.setAttribute("total", total);
+      req.setAttribute("totalPages", totalPages);
+
       if (teamId != null && nameKeyword.isEmpty() && phoneKeyword.isEmpty()) {
-        req.setAttribute("personnel", personnelDao.findByTeamId(teamId));
+        req.setAttribute("personnel", personnelDao.listPaged(teamId, nameKeyword, phoneKeyword, page, PAGE_SIZE));
       } else {
-        req.setAttribute("personnel", personnelDao.listFiltered(teamId, nameKeyword, phoneKeyword));
+        req.setAttribute("personnel", personnelDao.listPaged(teamId, nameKeyword, phoneKeyword, page, PAGE_SIZE));
       }
 
       String idStr = req.getParameter("id");
@@ -69,7 +88,6 @@ public class AdminPersonnelServlet extends HttpServlet {
     String action = val(req.getParameter("action"));
     try {
       if ("create".equals(action)) {
-        String login = val(req.getParameter("login"));
         String name = val(req.getParameter("name"));
         String passwd = val(req.getParameter("passwd"));
         String phone = val(req.getParameter("phone"));
@@ -78,15 +96,29 @@ public class AdminPersonnelServlet extends HttpServlet {
         String email = val(req.getParameter("email"));
         String teamIdStr = val(req.getParameter("teamId"));
 
+        if (phone.isEmpty()) {
+          req.getSession().setAttribute("flash", "需要填写手机号！");
+          resp.sendRedirect(req.getContextPath() + "/admin/personnel");
+          return;
+        }
+
         Integer teamId = teamIdStr.isEmpty() ? null : Integer.parseInt(teamIdStr);
         LocalDate birthdate = birthdateStr.isEmpty() ? null : LocalDate.parse(birthdateStr);
 
+        // 使用手机号作为登录名
+        String login = phone;
+        User exist = userDao.findByLogin(login);
+        if (exist != null) {
+          req.getSession().setAttribute("flash", "手机号 " + phone + " 已经存在，请使用不同手机号或编辑现有记录");
+          resp.sendRedirect(req.getContextPath() + "/admin/personnel");
+          return;
+        }
+
         int userId = userDao.create(login, name, passwd, 4, 1);
         personnelDao.upsertPersonnel(userId, phone, gender, birthdate, email, teamId);
-        req.getSession().setAttribute("flash", "已添加参测人员：" + login);
+        req.getSession().setAttribute("flash", "已添加参测人员：" + name + "(手机号:" + phone + ")");
       } else if ("update".equals(action)) {
         int userId = Integer.parseInt(req.getParameter("id"));
-        String login = val(req.getParameter("login"));
         String name = val(req.getParameter("name"));
         String phone = val(req.getParameter("phone"));
         String gender = val(req.getParameter("gender"));
@@ -94,15 +126,22 @@ public class AdminPersonnelServlet extends HttpServlet {
         String email = val(req.getParameter("email"));
         String teamIdStr = val(req.getParameter("teamId"));
 
+        if (phone.isEmpty()) {
+          req.getSession().setAttribute("flash", "需要填写手机号！");
+          resp.sendRedirect(req.getContextPath() + "/admin/personnel");
+          return;
+        }
+
         Integer teamId = teamIdStr.isEmpty() ? null : Integer.parseInt(teamIdStr);
         LocalDate birthdate = birthdateStr.isEmpty() ? null : LocalDate.parse(birthdateStr);
 
-        // type 固定 4，status 固定 1（参测人员）
+        // 使用手机号作为登录名，更新目前用户的登录名
+        String login = phone;
         userDao.updateBasic(userId, login, name, 4, 1);
         personnelDao.upsertPersonnel(userId, phone, gender, birthdate, email, teamId);
-        req.getSession().setAttribute("flash", "已保存参测人员：" + login);
+        req.getSession().setAttribute("flash", "已保存参测人员：" + name + "(手机号:" + phone + ")");
       } else if ("batchImport".equals(action)) {
-        // 支持批量导入：每行一条，格式：login,name,phone,gender,birthdate,email,teamId(可选)
+        // 支持批量导入：每行一条，格式：name,phone,gender,birthdate,email,teamId(可选)
         String raw = "";
         Part filePart = null;
         try {
@@ -134,29 +173,31 @@ public class AdminPersonnelServlet extends HttpServlet {
           if (s.isEmpty()) {
             continue;
           }
-          // 允许用制表符/逗号/中文逗号分隔
+          // 允许用制表符/逗号/中文逗号分隔，格式：name,phone,gender,birthdate,email[,teamId]
           String[] parts = s.split("[\\t,，]");
-          if (parts.length < 2) {
+          if (parts.length < 1) {
             fail++;
             errors.add("格式错误：" + s);
             continue;
           }
 
-          String login = parts[0].trim();
-          String name = parts[1].trim();
-          String phone = parts.length > 2 ? parts[2].trim() : "";
-          String gender = parts.length > 3 ? parts[3].trim() : "";
-          String birthdateStr = parts.length > 4 ? parts[4].trim() : "";
-          String email = parts.length > 5 ? parts[5].trim() : "";
-          String teamStr = parts.length > 6 ? parts[6].trim() : "";
+          String name = parts[0].trim();
+          String phone = parts.length > 1 ? parts[1].trim() : "";
+          String gender = parts.length > 2 ? parts[2].trim() : "";
+          String birthdateStr = parts.length > 3 ? parts[3].trim() : "";
+          String email = parts.length > 4 ? parts[4].trim() : "";
+          String teamStr = parts.length > 5 ? parts[5].trim() : "";
 
-          if (login.isEmpty() || name.isEmpty()) {
+          if (name.isEmpty()) {
             fail++;
-            errors.add("登录名/姓名为空：" + s);
+            errors.add("姓名为空：" + s);
             continue;
           }
 
           try {
+            // 使用手机号作为登录名，如果没有手机号则用姓名+时间戳兜底
+            String login = phone.isEmpty() ? ("p" + System.currentTimeMillis()) : phone;
+            
             Integer teamId = teamStr.isEmpty() ? defaultTeamId : Integer.parseInt(teamStr);
             LocalDate birthdate = birthdateStr.isEmpty() ? null : LocalDate.parse(birthdateStr);
 
@@ -172,11 +213,31 @@ public class AdminPersonnelServlet extends HttpServlet {
             ok++;
           } catch (Exception ex) {
             fail++;
-            errors.add("导入失败：" + login + " - " + ex.getMessage());
+            errors.add("导入失败：" + name + " - " + ex.getMessage());
           }
         }
 
-        req.getSession().setAttribute("flash", "批量导入完成：成功 " + ok + " 条，失败 " + fail + " 条" + (errors.isEmpty() ? "" : "（请检查数据格式/重复登录名）"));
+        req.getSession().setAttribute("flash", "批量导入完成：成功 " + ok + " 条，失败 " + fail + " 条");
+        if (!errors.isEmpty()) {
+          req.getSession().setAttribute("importErrors", errors);
+          req.getSession().setAttribute("importOk", ok);
+          req.getSession().setAttribute("importFail", fail);
+        }
+      } else if ("batchDelete".equals(action)) {
+        String[] ids = req.getParameterValues("selectedIds");
+        int count = 0;
+        if (ids != null) {
+          for (String idStr : ids) {
+            if (idStr == null || idStr.trim().isEmpty()) {
+              continue;
+            }
+            int userId = Integer.parseInt(idStr);
+            personnelDao.deletePersonnel(userId);
+            userDao.delete(userId);
+            count++;
+          }
+        }
+        req.getSession().setAttribute("flash", "已批量删除 " + count + " 条参测人员");
       } else if ("resetPwd".equals(action)) {
         int userId = Integer.parseInt(req.getParameter("id"));
         userDao.updatePassword(userId, "123456");
