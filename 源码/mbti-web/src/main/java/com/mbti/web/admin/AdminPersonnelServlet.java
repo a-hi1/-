@@ -168,43 +168,71 @@ public class AdminPersonnelServlet extends HttpServlet {
         int fail = 0;
         List<String> errors = new ArrayList<>();
 
+        // Flexible mapping logic
+        boolean isHeader = true;
+        int idxLogin = -1, idxName = -1, idxPwd = -1, idxGender = -1, idxBirthdate = -1, idxEmail = -1, idxPhone = -1;
+
         for (String line : rows) {
           String s = line == null ? "" : line.trim();
           if (s.isEmpty()) {
             continue;
           }
-          // 允许用制表符/逗号/中文逗号分隔，格式：name,phone,gender,birthdate,email[,teamId]
+          
           String[] parts = s.split("[\\t,，]");
-          if (parts.length < 1) {
+
+          if (isHeader && (s.contains("登录名") || s.contains("姓名") || s.contains("手机"))) {
+            for (int i = 0; i < parts.length; i++) {
+              String h = parts[i].trim();
+              if (h.contains("登录名")) idxLogin = i;
+              else if (h.contains("姓名")) idxName = i;
+              else if (h.contains("密码")) idxPwd = i;
+              else if (h.contains("性别")) idxGender = i;
+              else if (h.contains("出生") || h.contains("生日")) idxBirthdate = i;
+              else if (h.contains("邮箱")) idxEmail = i;
+              else if (h.contains("手机")) idxPhone = i;
+            }
+            isHeader = false;
+            continue; // Skip header row
+          }
+          isHeader = false;
+
+          // Default index mapping if header wasn't found
+          if (idxLogin == -1 && idxName == -1 && idxPhone == -1) {
+             // 默认格式：登录名,姓名,密码,性别(M/F),出生日期,邮箱,手机号
+             idxLogin = 0; idxName = 1; idxPwd = 2; idxGender = 3; idxBirthdate = 4; idxEmail = 5; idxPhone = 6;
+          }
+
+          int expectedMinParts = Math.max(idxLogin, idxName);
+          if (expectedMinParts != -1 && parts.length <= expectedMinParts) {
             fail++;
-            errors.add("格式错误：" + s);
+            errors.add("列数不匹配：" + s);
             continue;
           }
 
-          String name = parts[0].trim();
-          String phone = parts.length > 1 ? parts[1].trim() : "";
-          String gender = parts.length > 2 ? parts[2].trim() : "";
-          String birthdateStr = parts.length > 3 ? parts[3].trim() : "";
-          String email = parts.length > 4 ? parts[4].trim() : "";
-          String teamStr = parts.length > 5 ? parts[5].trim() : "";
+          String login = (idxLogin != -1 && idxLogin < parts.length) ? parts[idxLogin].trim() : "";
+          String name = (idxName != -1 && idxName < parts.length) ? parts[idxName].trim() : "";
+          String password = (idxPwd != -1 && idxPwd < parts.length) ? parts[idxPwd].trim() : "123456";
+          String gender = (idxGender != -1 && idxGender < parts.length) ? parts[idxGender].trim() : "";
+          String birthdateStr = (idxBirthdate != -1 && idxBirthdate < parts.length) ? parts[idxBirthdate].trim() : "";
+          String email = (idxEmail != -1 && idxEmail < parts.length) ? parts[idxEmail].trim() : "";
+          String phone = (idxPhone != -1 && idxPhone < parts.length) ? parts[idxPhone].trim() : "";
 
-          if (name.isEmpty()) {
+          if (login.isEmpty() && phone.isEmpty()) {
             fail++;
-            errors.add("姓名为空：" + s);
+            errors.add("缺少登录名和手机号（至少提供其一）：" + s);
             continue;
           }
+          if (login.isEmpty()) login = phone; // Fallback login to phone if empty
 
           try {
-            // 使用手机号作为登录名，如果没有手机号则用姓名+时间戳兜底
-            String login = phone.isEmpty() ? ("p" + System.currentTimeMillis()) : phone;
-            
-            Integer teamId = teamStr.isEmpty() ? defaultTeamId : Integer.parseInt(teamStr);
+            // Simplified team assignment defaulting
+            Integer teamId = defaultTeamId;
             LocalDate birthdate = birthdateStr.isEmpty() ? null : LocalDate.parse(birthdateStr);
 
             User exist = userDao.findByLogin(login);
             int userId;
             if (exist == null) {
-              userId = userDao.create(login, name, "123456", 4, 1);
+              userId = userDao.create(login, name, password, 4, 1);
             } else {
               userId = exist.getId();
               userDao.updateBasic(userId, login, name, 4, 1);
@@ -213,7 +241,7 @@ public class AdminPersonnelServlet extends HttpServlet {
             ok++;
           } catch (Exception ex) {
             fail++;
-            errors.add("导入失败：" + name + " - " + ex.getMessage());
+            errors.add("导入失败：" + login + " - " + ex.getMessage());
           }
         }
 

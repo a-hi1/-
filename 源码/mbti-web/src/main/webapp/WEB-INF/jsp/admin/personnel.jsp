@@ -143,20 +143,6 @@
 
   <div style="height:1px; background:var(--border); margin: 0 -24px 20px -24px;"></div>
 
-  <c:if test="${not empty personnel}">
-    <form method="post" action="${pageContext.request.contextPath}/admin/personnel" id="batch-delete-form">
-      <input type="hidden" name="action" value="batchDelete" />
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; gap:12px; flex-wrap:wrap;">
-        <div class="muted" style="font-size:13px;">当前显示 ${total} 条中的第 ${page} / ${totalPages} 页，每页 ${pageSize} 条</div>
-        <div style="display:flex; gap:10px; align-items:center;">
-          <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; color:#475569;">
-            <input type="checkbox" id="select-all-personnel" /> 全选当前页
-          </label>
-          <button class="btn btn-danger btn-sm" type="submit" onclick="return confirm('确认批量删除当前勾选的参测人员？')">批量删除</button>
-        </div>
-      </div>
-
-
   <div style="font-size:16px; font-weight:800; color:#1e293b; margin-bottom:16px; display:flex; align-items:center; gap:8px;">
     <span style="width:4px; height:16px; background:#10b981; border-radius:2px;"></span>快捷批量导入
     <div class="muted" style="margin-left:auto; font-weight:normal; font-size:13px; display:flex; align-items:center; gap:6px;">
@@ -191,6 +177,7 @@
       <textarea name="lines" style="flex:1; width:100%; min-height: 160px; padding:12px 14px; border:1px solid #cbd5e1; border-radius:8px; font-family:monospace; line-height:1.6;" placeholder="格式要求（英文逗号或制表符分隔，系统自动以手机号作为登录名）：&#10;姓名, 手机号, 性别, 生日, 邮箱, [指定批次ID]&#10;&#10;示例：&#10;张三, 13800000000, M, 2000-01-01, li@qq.com, 1&#10;李四, 13900000000, F, 2001-05-15, wang@qq.com"></textarea>
       
       <div style="display:flex;justify-content:flex-end; margin-top:16px;">
+      <div style="display:flex; gap:12px; margin-top:20px;">
         <button class="btn" style="background:#10b981; color:#fff; border-color:#059669;" type="submit" onclick="return confirm('确认执行批量导入？规则：\n1. 已存在的登录名将更新信息\n2. 空白列将保留原值/默认值')">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
           确认开始导入
@@ -201,9 +188,21 @@
 </div>
 
 <div class="card" style="padding:0; overflow:hidden; box-shadow:0 2px 10px rgba(0,0,0,0.05); border:1px solid var(--border);">
+  <c:if test="${not empty personnel}">
+  <form method="post" action="${pageContext.request.contextPath}/admin/personnel" id="batch-delete-form" style="margin: 0;">
+    <input type="hidden" name="action" value="batchDelete" />
+    <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 16px; border-bottom:1px solid var(--border); background:#f8fafc;">
+      <div class="muted" style="font-size:13px;">当前显示 ${total} 条中的第 ${page} / ${totalPages} 页，每页 ${pageSize} 条</div>
+      <div style="display:flex; gap:10px; align-items:center;">
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; color:#475569;">
+          <input type="checkbox" id="select-all-head" /> 全选本页
+        </label>
+        <button class="btn btn-danger btn-sm" type="submit" onclick="return confirm('确认批量删除当前勾选的参测人员？')">批量删除</button>
+      </div>
+    </div>
   <table class="table">
     <tr>
-      <th style="width:42px; text-align:center;"><input type="checkbox" id="select-all-head" /></th>
+      <th style="width:42px; text-align:center;"></th>
       <th style="width:70px; text-align:center;">ID</th>
       <th style="width:160px">登录名</th>
       <th style="width:140px">姓名</th>
@@ -239,23 +238,16 @@
         <td style="text-align:right; padding-right:24px; white-space:nowrap;">
           <div style="display:flex; justify-content:flex-end; align-items:center; gap:8px;">
             <a class="btn btn-view btn-sm" href="${pageContext.request.contextPath}/admin/personnel?id=${p.id}" style="padding:5px 12px; margin:0;">编辑</a>
-            <form method="post" action="${pageContext.request.contextPath}/admin/personnel" style="margin:0;">
-              <input type="hidden" name="id" value="${p.id}" />
-              <input type="hidden" name="action" value="resetPwd" />
-              <button class="btn btn-light btn-sm" type="submit" style="padding:5px 12px; margin:0; white-space:nowrap;" onclick="return confirm('确认重置密码为 123456？')">重置密码</button>
-            </form>
-            <form method="post" action="${pageContext.request.contextPath}/admin/personnel" style="margin:0;">
-              <input type="hidden" name="id" value="${p.id}" />
-              <input type="hidden" name="action" value="delete" />
-              <button class="btn btn-danger btn-sm" type="submit" style="padding:5px 12px; margin:0; white-space:nowrap;" onclick="return confirm('确认删除该参测人员？')">删除</button>
-            </form>
+            <!-- individual action forms should be replaced with links or handled uniquely so they don't break the outer form -->
+            <a class="btn btn-light btn-sm" href="${pageContext.request.contextPath}/admin/personnel?id=${p.id}&action=resetPwd" style="padding:5px 12px; margin:0; white-space:nowrap;" onclick="return confirm('确认重置密码为 123456？')">重置密码</a>
+            <a class="btn btn-danger btn-sm" href="${pageContext.request.contextPath}/admin/personnel?id=${p.id}&action=delete" style="padding:5px 12px; margin:0; white-space:nowrap;" onclick="return confirm('确认删除该参测人员？')">删除</a>
           </div>
         </td>
       </tr>
     </c:forEach>
   </table>
 
-    <div style="display:flex; justify-content:flex-end; gap:8px; padding:14px 0 0; flex-wrap:wrap;">
+    <div style="display:flex; justify-content:flex-end; gap:8px; padding:14px 16px 14px 16px; flex-wrap:wrap; border-top:1px solid var(--border); background:#f8fafc;">
       <c:if test="${page > 1}">
         <a class="btn btn-light btn-sm" href="${pageContext.request.contextPath}/admin/personnel?page=${page - 1}&teamId=${teamId}&name=${name}&phone=${phone}">上一页</a>
       </c:if>
@@ -263,8 +255,7 @@
         <a class="btn btn-light btn-sm" href="${pageContext.request.contextPath}/admin/personnel?page=${page + 1}&teamId=${teamId}&name=${name}&phone=${phone}">下一页</a>
       </c:if>
     </div>
-
-    </form>
+  </form>
   </c:if>
 
   <c:if test="${empty personnel}">
