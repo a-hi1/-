@@ -24,6 +24,7 @@ public class LoginServlet extends HttpServlet {
   protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException, ServletException {
     String login = req.getParameter("login");
     String passwd = req.getParameter("passwd");
+    String userType = req.getParameter("userType"); // "admin" or "personnel"
 
     req.setCharacterEncoding("UTF-8");
     req.setAttribute("login", login);
@@ -41,6 +42,23 @@ public class LoginServlet extends HttpServlet {
         req.getRequestDispatcher("/WEB-INF/jsp/login.jsp").forward(req, resp);
         return;
       }
+
+      // 验证用户类型与登录方式匹配
+      boolean isAdmin = (user.getType() == 1 || user.getType() == 2 || user.getType() == 3);
+      boolean isPersonnel = (user.getType() == 4);
+
+      if ("admin".equals(userType) && !isAdmin) {
+        req.setAttribute("error", "该账号不是管理员账号");
+        req.getRequestDispatcher("/WEB-INF/jsp/login.jsp").forward(req, resp);
+        return;
+      }
+
+      if ("personnel".equals(userType) && !isPersonnel) {
+        req.setAttribute("error", "该账号不是参测人员账号");
+        req.getRequestDispatcher("/WEB-INF/jsp/login.jsp").forward(req, resp);
+        return;
+      }
+
       req.getSession().setAttribute(Web.SESSION_USER, user);
       userDao.updateLastLogin(user.getId());
 

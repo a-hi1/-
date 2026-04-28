@@ -9,55 +9,98 @@
   <title>参测人员注册 - MBTI职业性格测试系统</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: "Microsoft YaHei", sans-serif; background: #eaeaea; color: #333; overflow: hidden; }
+    html { scroll-behavior: smooth; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Microsoft YaHei", sans-serif; background: linear-gradient(135deg, #eaeaea 0%, #f5f5f5 100%); color: #333; overflow: hidden; }
     /* 页面分屏背景与同心圆装饰 */
     .page-wrap { position: relative; width: 100vw; height: 100vh; display: flex; align-items: center; justify-content: center; }
-    .bg-left { position: absolute; left: 0; top: 0; width: 50%; height: 100%; background: #f6dc9c; z-index: 0; }
-    .bg-right { position: absolute; right: 0; top: 0; width: 50%; height: 100%; background: #ececec; z-index: 0; }
+    .bg-left { position: absolute; left: 0; top: 0; width: 50%; height: 100%; background: linear-gradient(135deg, #f6dc9c 0%, #f9e5b5 100%); z-index: 0; animation: gradientShift 8s ease infinite; }
+    .bg-right { position: absolute; right: 0; top: 0; width: 50%; height: 100%; background: linear-gradient(135deg, #ececec 0%, #f9f9f9 100%); z-index: 0; }
+    
+    @keyframes gradientShift {
+      0%, 100% { filter: brightness(1); }
+      50% { filter: brightness(1.05); }
+    }
+    
     /* 同心圆背景线 */
     .rings { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 0; pointer-events: none; }
-    .ring { position: absolute; border: 1px solid rgba(220, 160, 40, 0.2); border-radius: 50%; top: 50%; left: 50%; transform: translate(-50%, -50%); }
-    .ring-1 { width: 600px; height: 600px; }
-    .ring-2 { width: 900px; height: 900px; }
-    .ring-3 { width: 1300px; height: 1300px; border-color: rgba(220, 160, 40, 0.1); }
-    .ring-4 { width: 1800px; height: 1800px; border-color: rgba(220, 160, 40, 0.05); }
+    .ring { position: absolute; border: 1px solid rgba(220, 160, 40, 0.2); border-radius: 50%; top: 50%; left: 50%; transform: translate(-50%, -50%); transition: all 0.3s ease; }
+    .ring-1 { width: 600px; height: 600px; animation: float 6s ease-in-out infinite; }
+    .ring-2 { width: 900px; height: 900px; animation: float 8s ease-in-out infinite reverse; }
+    .ring-3 { width: 1300px; height: 1300px; border-color: rgba(220, 160, 40, 0.1); animation: float 10s ease-in-out infinite; }
+    .ring-4 { width: 1800px; height: 1800px; border-color: rgba(220, 160, 40, 0.05); animation: float 12s ease-in-out infinite reverse; }
+
+    @keyframes float {
+      0%, 100% { transform: translate(-50%, -50%) scale(1); }
+      50% { transform: translate(-50%, -50%) scale(1.02); }
+    }
+
     /* 周边小圆点 */
-    .deco-dot { position: absolute; border-radius: 50%; z-index: 1; pointer-events: none; }
-    .dot-1 { width: 60px; height: 60px; background: #eda629; right: 15%; top: 15%; }
-    .dot-2 { width: 40px; height: 40px; background: #e3a232; right: 25%; bottom: 15%; }
-    .dot-3 { width: 20px; height: 20px; background: #f4cf82; left: 20%; top: 20%; }
+    .deco-dot { position: absolute; border-radius: 50%; z-index: 1; pointer-events: none; animation: pulse 3s ease-in-out infinite; }
+    .dot-1 { width: 60px; height: 60px; background: #eda629; right: 15%; top: 15%; animation-delay: 0s; box-shadow: 0 0 20px rgba(237, 166, 41, 0.4); }
+    .dot-2 { width: 40px; height: 40px; background: #e3a232; right: 25%; bottom: 15%; animation-delay: 1s; box-shadow: 0 0 15px rgba(227, 162, 50, 0.3); }
+    .dot-3 { width: 20px; height: 20px; background: #f4cf82; left: 20%; top: 20%; animation-delay: 2s; box-shadow: 0 0 10px rgba(244, 207, 130, 0.2); }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 0.8; }
+      50% { transform: scale(1.1); opacity: 1; }
+    }
+
     /* 中央卡片 */
-    .card { position: relative; z-index: 10; display: flex; width: 960px; max-width: 95vw; height: auto; max-height: 90vh; background: #fff; border-radius: 4px; box-shadow: 0 15px 35px rgba(200, 150, 40, 0.2); overflow: hidden; }
+    .card { position: relative; z-index: 10; display: flex; width: 960px; max-width: 95vw; height: auto; max-height: 90vh; background: #fff; border-radius: 16px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15); overflow: hidden; animation: slideUp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(40px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
     /* 卡片左侧插画区 */
     .card-left { flex: 1; background: #fff; position: relative; display: flex; align-items: center; justify-content: center; min-height: 520px; }
     .card-left .logo-top { position: absolute; top: 30px; left: 0; width: 100%; display: flex; justify-content: center; padding-right: 90px; }
-    .illustration { width: 85%; max-width: 340px; position: relative; z-index: 2; margin-bottom:20px; }
-    .badge { position: absolute; bottom: 45px; left: 50%; transform: translateX(-50%); background: #eda526; color: #fff; padding: 6px 20px; border-radius: 999px; font-weight: bold; font-size: 14px; letter-spacing: 1px; z-index: 3; box-shadow: 0 4px 10px rgba(237, 165, 38, 0.4); white-space: nowrap; }
+    .illustration { width: 85%; max-width: 340px; position: relative; z-index: 2; margin-bottom:20px; animation: float 4s ease-in-out infinite; }
+    .badge { position: absolute; bottom: 45px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, #eda526, #f59e0b); color: #fff; padding: 8px 24px; border-radius: 999px; font-weight: bold; font-size: 14px; letter-spacing: 1px; z-index: 3; box-shadow: 0 6px 20px rgba(237, 165, 38, 0.5); white-space: nowrap; animation: bounce 2s ease-in-out infinite; }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateX(-50%) translateY(0); }
+      50% { transform: translateX(-50%) translateY(-8px); }
+    }
+
     /* 卡片右侧表单区 */
-    .card-right { flex: 1; background: #f8f9fb; display: flex; flex-direction: column; justify-content: flex-start; align-items: center; padding: 35px 50px; overflow-y: auto; }
-    .logo-main { display: flex; align-items: center; gap: 12px; margin-bottom: 25px; }
-    .logo-icon { width: 42px; height: 42px; fill: #eda526; }
+    .card-right { flex: 1; background: linear-gradient(135deg, #f8f9fb, #fafbfc); display: flex; flex-direction: column; justify-content: flex-start; align-items: center; padding: 40px 50px; overflow-y: auto; }
+    .logo-main { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+    .logo-icon { width: 42px; height: 42px; fill: #eda526; animation: spin 20s linear infinite; }
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     .logo-text-wrap { display: flex; flex-direction: column; }
     .logo-mbti { font-size: 32px; font-weight: 900; font-style: italic; color: #222; line-height: 1; letter-spacing: 2px; }
-    .logo-sub { font-size: 13px; font-weight: 700; color: #333; letter-spacing: 1px; margin-top: 2px; }
-    .form-wrap { width: 100%; max-width: 320px; }
-    .input-group { display: flex; align-items: center; position: relative; margin-bottom: 20px; }
-    .input-label { width: 70px; font-size: 14px; font-weight: bold; color: #555; text-align: right; margin-right: 15px; flex-shrink: 0; }
-    .input-field { flex: 1; min-width: 0; padding: 6px 0; border: none; border-bottom: 1px solid #eda526; background: transparent; font-size: 14px; color: #333; outline: none; letter-spacing: 1px; }
-    .input-field::placeholder { color: #a1a1a1; letter-spacing: 1px; font-size: 13px; }
-    .gender-wrap { display: flex; align-items: center; gap: 18px; flex: 1; padding: 6px 0; border-bottom: 1px solid rgba(237, 165, 38, 0.4); }
-    .gender-wrap label { display: flex; align-items: center; gap: 6px; font-size: 14px; cursor: pointer; color: #333; }
-    .error-msg { color: #ef4444; font-size: 12px; text-align: center; margin-top: -10px; margin-bottom: 15px; }
-    .action-btn { display: inline-flex; align-items: center; justify-content: center; width: 100%; height: 42px; border-radius: 999px; background: #eda526; color: #fff; font-size: 16px; font-weight: bold; letter-spacing: 6px; padding-left: 6px; border: none; cursor: pointer; text-decoration: none; margin-bottom: 15px; transition: all 0.2s; box-shadow: 0 4px 10px rgba(237, 165, 38, 0.3); }
-    .action-btn:hover { background: #df971b; transform: translateY(-1px); box-shadow: 0 6px 14px rgba(237, 165, 38, 0.4); text-decoration: none; color: #fff; }
-    .btn-light { background: #fff; color: #eda526; border: 1px solid #eda526; box-shadow: none; padding-left: 2px;}
-    .btn-light:hover { background: #fdfaf3; color: #df971b; border-color: #df971b; transform: translateY(-1px); box-shadow: none; }
-    input:-webkit-autofill { -webkit-box-shadow: 0 0 0 30px #f8f9fb inset !important; }
+    .logo-sub { font-size: 13px; font-weight: 700; color: #666; letter-spacing: 1px; margin-top: 2px; }
+    .form-wrap { width: 100%; max-width: 360px; }
+    .input-group { display: flex; align-items: center; position: relative; margin-bottom: 20px; animation: fadeIn 0.4s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
+    .input-label { width: 70px; font-size: 14px; font-weight: 700; color: #4b5563; text-align: right; margin-right: 15px; flex-shrink: 0; }
+    .input-field { flex: 1; min-width: 0; padding: 8px 0; border: none; border-bottom: 2px solid #e5e7eb; background: transparent; font-size: 14px; color: #333; outline: none; letter-spacing: 0.5px; transition: all 0.3s ease; }
+    .input-field:hover { border-bottom-color: #eda526; }
+    .input-field:focus { border-bottom-color: #eda526; box-shadow: 0 2px 0 #eda526; background: #fffbf0; }
+    .input-field::placeholder { color: #d1d5db; }
+    .gender-wrap { display: flex; align-items: center; gap: 18px; flex: 1; padding: 8px 0; border-bottom: 2px solid #e5e7eb; transition: all 0.3s; }
+    .gender-wrap:hover { border-bottom-color: #eda526; }
+    .gender-wrap label { display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; color: #333; font-weight: 500; transition: color 0.2s; }
+    .gender-wrap label:hover { color: #eda526; }
+    .gender-wrap input[type="radio"] { cursor: pointer; transition: transform 0.2s; }
+    .gender-wrap input[type="radio"]:hover { transform: scale(1.1); }
+    .error-msg { color: #ef4444; font-size: 12px; text-align: center; margin-bottom: 15px; animation: shake 0.5s ease; }
+    @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+    .action-btn { display: inline-flex; align-items: center; justify-content: center; width: 100%; height: 44px; border-radius: 10px; background: linear-gradient(135deg, #eda526, #f59e0b); color: #fff; font-size: 16px; font-weight: 700; border: none; cursor: pointer; text-decoration: none; margin-bottom: 12px; transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); box-shadow: 0 4px 15px rgba(237, 165, 38, 0.3); position: relative; overflow: hidden; }
+    .action-btn::before { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.2); transition: left 0.4s ease; }
+    .action-btn:hover::before { left: 100%; }
+    .action-btn:hover { background: linear-gradient(135deg, #df971b, #d97706); transform: translateY(-2px); box-shadow: 0 8px 25px rgba(237, 165, 38, 0.5); text-decoration: none; color: #fff; }
+    .action-btn:active { transform: translateY(0); }
+    .btn-light { background: #f3f4f6; color: #495057; border: 1px solid #e5e7eb; box-shadow: none; }
+    .btn-light:hover { background: #e5e7eb; color: #1f2937; border-color: #d1d5db; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); text-decoration: none; }
+    input:-webkit-autofill { -webkit-box-shadow: 0 0 0 30px #f8f9fb inset !important; -webkit-text-fill-color: #333 !important; }
     @media (max-width: 768px) {
       .card-left, .bg-left, .rings, .deco-dot { display: none; }
-      .card { width: 440px; height: auto; max-height: 90vh; }
+      .card { width: 100%; height: 100vh; max-width: 100%; border-radius: 0; }
       .bg-right { width: 100%; }
-      .card-right { background: #fff; padding: 40px 30px; }
+      .card-right { background: #fff; padding: 40px 20px; justify-content: center; }
     }
   </style>
 </head>
