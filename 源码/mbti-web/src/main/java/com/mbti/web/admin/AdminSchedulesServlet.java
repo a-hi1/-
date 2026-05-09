@@ -133,15 +133,6 @@ public class AdminSchedulesServlet extends HttpServlet {
         }
       } else if ("delete".equals(action)) {
         int id = Integer.parseInt(req.getParameter("id"));
-        int refs = scheduleDao.countExamRefs(id);
-        if (refs > 0) {
-          req.setAttribute("error", "该测试安排已产生 " + refs + " 条考试记录，不能删除");
-          req.setAttribute("schedules", scheduleDao.listForTeam(null));
-          req.setAttribute("teams", teamDao.listAll());
-          req.setAttribute("assessments", assessmentDao.listAll());
-          req.getRequestDispatcher("/WEB-INF/jsp/admin/schedules.jsp").forward(req, resp);
-          return;
-        }
         scheduleDao.delete(id);
       }
 

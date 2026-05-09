@@ -198,8 +198,8 @@ public class AdminPersonnelServlet extends HttpServlet {
 
           // Default index mapping if header wasn't found
           if (idxLogin == -1 && idxName == -1 && idxPhone == -1) {
-             // 默认格式：登录名,姓名,密码,性别(M/F),出生日期,邮箱,手机号
-             idxLogin = 0; idxName = 1; idxPwd = 2; idxGender = 3; idxBirthdate = 4; idxEmail = 5; idxPhone = 6;
+             // 默认格式（匹配样例文件）：姓名,手机号,性别,出生日期,邮箱
+             idxName = 0; idxPhone = 1; idxGender = 2; idxBirthdate = 3; idxEmail = 4;
           }
 
           int expectedMinParts = Math.max(idxLogin, idxName);

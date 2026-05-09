@@ -53,13 +53,7 @@ public class AdminTeamDeleteServlet extends HttpServlet {
       }
 
       int refs = teamDao.countPersonnelRefs(id);
-      if (refs > 0) {
-        req.setAttribute("team", team);
-        req.setAttribute("error", "该批次下存在 " + refs + " 个参测人员，不能删除");
-        req.getRequestDispatcher("/WEB-INF/jsp/admin/team_delete.jsp").forward(req, resp);
-        return;
-      }
-
+      // 解除删除限制：强制删除批次时，关联的参测人员将被保留并移出该批次
       teamDao.delete(id);
       resp.sendRedirect(req.getContextPath() + "/admin/teams");
     } catch (Exception e) {

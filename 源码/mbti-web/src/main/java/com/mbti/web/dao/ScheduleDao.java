@@ -154,11 +154,33 @@ public class ScheduleDao {
   }
 
   public void delete(int id) throws SQLException {
-    String sql = "delete from schedules where id=?";
-    try (Connection conn = Db.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql)) {
-      ps.setInt(1, id);
-      ps.executeUpdate();
+    String deleteDetails = "delete from exam_questions where exam_id in (select id from exams where schedule_id=?)";
+    String deleteExams = "delete from exams where schedule_id=?";
+    String deleteSchedule = "delete from schedules where id=?";
+
+    try (Connection conn = Db.getConnection()) {
+      boolean autoCommit = conn.getAutoCommit();
+      conn.setAutoCommit(false);
+      try {
+        try (PreparedStatement ps = conn.prepareStatement(deleteDetails)) {
+          ps.setInt(1, id);
+          ps.executeUpdate();
+        }
+        try (PreparedStatement ps = conn.prepareStatement(deleteExams)) {
+          ps.setInt(1, id);
+          ps.executeUpdate();
+        }
+        try (PreparedStatement ps = conn.prepareStatement(deleteSchedule)) {
+          ps.setInt(1, id);
+          ps.executeUpdate();
+        }
+        conn.commit();
+      } catch (SQLException e) {
+        conn.rollback();
+        throw e;
+      } finally {
+        conn.setAutoCommit(autoCommit);
+      }
     }
   }
 

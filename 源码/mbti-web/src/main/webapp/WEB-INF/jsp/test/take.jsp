@@ -34,7 +34,11 @@
   <div class="exam-head">
     <div>
       <div class="exam-title">${schedule.assessmentTitle}</div>
-      <div class="exam-sub">共${fn:length(questions)}题 · 单题作答支持上一题/下一题与题号跳转</div>
+      <div class="exam-sub">共${fn:length(questions)}题 · 单题作答支持上一题/下一题与题号跳转 
+        <c:if test="${schedule.duration > 0}">
+          <span id="examTimerDisplay" style="margin-left: 12px; font-weight: bold; color: #d93025; font-size: 15px;">⏱ 剩余时间：--:--</span>
+        </c:if>
+      </div>
     </div>
     <div class="exam-mode">
       <button class="exam-mode-link" type="button" id="modeSingleBtn">单题作答</button>
@@ -181,6 +185,62 @@
           saveModal.addEventListener('click', function(ev){
             if (ev.target === saveModal) closeModal();
           });
+        }
+
+        // 倒计时逻辑
+        var durationMinutes = ${schedule.duration != null ? schedule.duration : 0};
+        var timerDisplay = document.getElementById('examTimerDisplay');
+        var examIdStr = '${examId}';
+        var jsScheduleId = '${schedule.id}';
+        if (durationMinutes > 0 && timerDisplay && examIdStr) {
+          var timerKey = 'exam.timer.' + jsScheduleId + '.' + examIdStr;
+          var endTimeStr = localStorage.getItem(timerKey);
+          var endTime = 0;
+          if (endTimeStr && !isNaN(parseInt(endTimeStr, 10))) {
+            endTime = parseInt(endTimeStr, 10);
+            var now = Date.now();
+            // 如果缓存时间已经过去很久或者异常偏离，重新计算
+            if (now > endTime + 24 * 3600 * 1000) {
+              endTime = now + durationMinutes * 60 * 1000;
+              localStorage.setItem(timerKey, String(endTime));
+            }
+          } else {
+            endTime = Date.now() + durationMinutes * 60 * 1000;
+            localStorage.setItem(timerKey, String(endTime));
+          }
+
+          var timerInterval = setInterval(function() {
+            var now = Date.now();
+            var remain = endTime - now;
+            if (remain <= 0) {
+              clearInterval(timerInterval);
+              timerDisplay.textContent = '⏱ 剩余时间：00:00';
+              localStorage.removeItem(timerKey);
+              if (!confirmedSubmit) {
+                confirmedSubmit = true;
+                alert('测评时间已到，未作答题目已默认选择第一项，系统将自动交卷！');
+                if (examForm) {
+                  // 自动补全未选择的题目（后端强制要求完成）
+                  var qs = document.querySelectorAll('.exam-question');
+                  for (var i = 0; i < qs.length; i++) {
+                    var qid = qs[i].getAttribute('data-qid');
+                    if (qid && !document.querySelector('input[name="q_' + qid + '"]:checked')) {
+                      var firstRadio = qs[i].querySelector('input[type="radio"]');
+                      if (firstRadio) firstRadio.checked = true;
+                    }
+                  }
+                  examForm.submit();
+                }
+              }
+            } else {
+              var m = Math.floor(remain / 60000);
+              var s = Math.floor((remain % 60000) / 1000);
+              timerDisplay.textContent = '⏱ 剩余时间：' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+              if (m < 5) {
+                timerDisplay.style.animation = 'blink 1s infinite alternate';
+              }
+            }
+          }, 1000);
         }
 
         var params = new URLSearchParams(location.search);

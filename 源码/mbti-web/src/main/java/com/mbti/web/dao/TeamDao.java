@@ -111,11 +111,33 @@ public class TeamDao {
   }
 
   public void delete(int id) throws SQLException {
+    String detachPersonnel = "update testpersonnel set team_id=null where team_id=?";
+    String detachSchedules = "update schedules set team_id=null where team_id=?";
     String sql = "delete from class_teams where id=?";
-    try (Connection conn = Db.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql)) {
-      ps.setInt(1, id);
-      ps.executeUpdate();
+    
+    try (Connection conn = Db.getConnection()) {
+      boolean autoCommit = conn.getAutoCommit();
+      conn.setAutoCommit(false);
+      try {
+        try (PreparedStatement ps = conn.prepareStatement(detachPersonnel)) {
+          ps.setInt(1, id);
+          ps.executeUpdate();
+        }
+        try (PreparedStatement ps = conn.prepareStatement(detachSchedules)) {
+          ps.setInt(1, id);
+          ps.executeUpdate();
+        }
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+          ps.setInt(1, id);
+          ps.executeUpdate();
+        }
+        conn.commit();
+      } catch (SQLException e) {
+        conn.rollback();
+        throw e;
+      } finally {
+        conn.setAutoCommit(autoCommit);
+      }
     }
   }
 

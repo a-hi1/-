@@ -10,12 +10,16 @@
       <div class="muted" style="line-height:1.8">${pendingMessage}</div>
     </c:when>
     <c:otherwise>
-      <div style="display:flex; gap:20px; align-items:flex-start;">
+      <div style="display:flex; gap:20px; align-items:center; background: linear-gradient(135deg, #f0fdf4 0%, #e0f2fe 100%); padding: 24px; border-radius: 16px; margin-bottom: 20px; box-shadow: 0 4px 16px rgba(0,0,0,0.05);">
         <div style="flex:1;">
-          <h3 style="margin:0 0 6px">你的类型：${resultText}</h3>
+          <div style="font-size: 16px; color: #4b5563; margin-bottom: 8px;">经过综合测算，你的 MBTI 性格类型是：</div>
+          <div style="font-size: 64px; font-weight: 900; color: #1d4ed8; line-height: 1.1; letter-spacing: 4px; text-shadow: 0 4px 12px rgba(29,78,216,0.2); font-family: 'Arial Black', Impact, sans-serif;">${resultText}</div>
+          <c:if test="${not empty mbtiProfile}">
+            <div style="font-size: 22px; color: #059669; font-weight: bold; margin-top: 12px;">🏆 ${mbtiProfile.title}</div>
+          </c:if>
         </div>
         <div style="flex-shrink:0; width:200px; text-align:center;">
-          <img src="${pageContext.request.contextPath}/static/img/${resultText}.jpg" alt="${resultText}" style="width:100%; max-width:200px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.1);" onerror="this.style.display='none'" />
+          <img src="${pageContext.request.contextPath}/static/img/${resultText}.jpg" alt="${resultText}" style="width:100%; max-width:200px; border-radius:12px; box-shadow:0 8px 24px rgba(0,0,0,0.15); background:#fff;" onerror="this.style.display='none'" />
         </div>
       </div>
     </c:otherwise>
@@ -23,8 +27,7 @@
 
   <c:if test="${!pending && not empty mbtiProfile}">
     <div style="margin-top:10px">
-      <div class="muted" style="margin-bottom:6px">${mbtiProfile.title}</div>
-      <div style="line-height:1.8">${mbtiProfile.summary}</div>
+      <div style="line-height:1.8; font-size:15px;">${mbtiProfile.summary}</div>
 
       <c:if test="${not empty mbtiProfile.strengths}">
         <div style="margin-top:10px;font-weight:700">典型优势</div>
@@ -66,7 +69,11 @@
 
 <c:if test="${not empty dimensionScores}">
   <div class="card">
-  <h3 style="margin:0 0 10px">维度明细</h3>
+  <h3 style="margin:0 0 10px">维度得分雷达图及明细</h3>
+  
+  <!-- 图表容器 -->
+  <div id="radarChart" style="width: 100%; height: 350px; margin-bottom: 20px;"></div>
+  
   <table class="table">
     <tr>
       <th>维度</th>
@@ -79,11 +86,73 @@
         <td>${ds.dimension.title}</td>
         <td>${ds.score}</td>
         <td>${ds.total}</td>
-        <td>${ds.letter}</td>
+        <td><span style="font-weight:bold; color:#1d4ed8;">${ds.letter}</span></td>
       </tr>
     </c:forEach>
   </table>
   </div>
+  
+  <!-- 引入 ECharts 库 -->
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+  <script>
+    (function(){
+      var chartDom = document.getElementById('radarChart');
+      if (chartDom && typeof echarts !== 'undefined') {
+        var myChart = echarts.init(chartDom);
+        var indicator = [];
+        var data = [];
+
+        <c:forEach items="${dimensionScores}" var="ds">
+          indicator.push({ name: '${ds.dimension.title}', max: ${ds.total} });
+          data.push(${ds.score});
+        </c:forEach>
+
+        var option = {
+          tooltip: {
+            trigger: 'item'
+          },
+          radar: {
+            indicator: indicator,
+            radius: '65%',
+            splitNumber: 5,
+            axisName: {
+              color: '#fff',
+              backgroundColor: '#4b5563',
+              borderRadius: 4,
+              padding: [4, 8],
+              fontSize: 13
+            }
+          },
+          series: [
+            {
+              name: '维度得分',
+              type: 'radar',
+              data: [
+                {
+                  value: data,
+                  name: '你的维度偏好',
+                  areaStyle: {
+                    color: 'rgba(29, 78, 216, 0.2)'
+                  },
+                  lineStyle: {
+                    color: '#1d4ed8',
+                    width: 2
+                  },
+                  itemStyle: {
+                    color: '#1d4ed8'
+                  }
+                }
+              ]
+            }
+          ]
+        };
+        myChart.setOption(option);
+        window.addEventListener('resize', function() {
+          myChart.resize();
+        });
+      }
+    })();
+  </script>
 </c:if>
 
 <%@ include file="../_layout_bottom.jspf" %>
